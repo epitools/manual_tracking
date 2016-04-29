@@ -2,6 +2,8 @@ package plugins.davhelle.cellgraph.overlays;
 
 import java.awt.Color;
 import java.awt.Graphics2D;
+import java.awt.event.MouseEvent;
+import java.awt.geom.Point2D;
 import java.awt.geom.Line2D.Double;
 
 import com.vividsolutions.jts.awt.ShapeWriter;
@@ -45,6 +47,27 @@ public class ManualTrackingOverlay extends StGraphOverlay {
 	}
 	
 	@Override
+	public void mouseClick(MouseEvent e, Point2D imagePoint, IcyCanvas canvas){
+		int time_point = canvas.getPositionT();
+		
+		if(time_point < stGraph.size()){
+			
+			//create point Geometry
+			Coordinate point_coor = new Coordinate(imagePoint.getX(), imagePoint.getY());
+			Point point_geometry = factory.createPoint(point_coor);			
+			
+			FrameGraph frame_i = stGraph.getFrame(time_point);
+			for(Node cell: frame_i.vertexSet()){
+			 	if(cell.getGeometry().contains(point_geometry)){
+			 		
+			 		cell.setTrackID(1);
+			 		
+			 	}
+			}
+		}
+	}
+	
+	@Override
 	public void paint(Graphics2D g, Sequence sequence, IcyCanvas canvas)
     {
 		if (canvas instanceof VtkCanvas)
@@ -69,20 +92,27 @@ public class ManualTrackingOverlay extends StGraphOverlay {
 	public void paintFrame(Graphics2D g, FrameGraph frame_i) {
 		
 		for(Node n: frame_i.vertexSet()){
-			if(n.hasColorTag()){
-				g.setColor(new Color(255,0,0,180)); //last is alpha channel
+			if(n.getTrackID() == 1){
+				g.setColor(new Color(255,0,255,180)); //last is alpha channel
 				g.fill(writer.toShape(n.getGeometry()));
 				
 				for(Node neighbor: n.getNeighbors()){
 					
-					//connect to central node
-					connectNodes(g, neighbor, n);
+//					//connect to central node
+//					connectNodes(g, neighbor, n);
+//					
+//					//connect nodes among each other
+//					for(Node other: n.getNeighbors())
+//						if(neighbor != other)
+//							if(frame_i.containsEdge(neighbor, other))
+//								connectNodes(g, neighbor, other);
 					
-					//connect nodes among each other
-					for(Node other: n.getNeighbors())
-						if(neighbor != other)
-							if(frame_i.containsEdge(neighbor, other))
-								connectNodes(g, neighbor, other);
+					//idea: only neighbor's neighbors that are 
+					//also neighbors of other n's neighbors
+					//limits amount of lines
+					for(Node nn: neighbor.getNeighbors())
+						if(frame_i.containsEdge(neighbor, nn))
+							connectNodes(g, neighbor, nn);
 				}
 				
 				
@@ -93,7 +123,7 @@ public class ManualTrackingOverlay extends StGraphOverlay {
 		//by testing the presence of edges, such to find
 		//the circle surrounding the cell that should be tracked
 		
-		
+		//add the track id!
 		
 		//TODO add click response for user
 
