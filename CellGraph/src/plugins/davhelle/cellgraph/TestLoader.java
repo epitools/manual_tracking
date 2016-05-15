@@ -7,9 +7,10 @@ import icy.sequence.Sequence;
 import icy.swimmingPool.SwimmingObject;
 import icy.swimmingPool.SwimmingPool;
 
+import java.awt.Color;
 import java.io.File;
 
-import javax.swing.JFileChooser;
+//import javax.swing.JFileChooser;
 
 import plugins.davhelle.cellgraph.graphs.GraphType;
 import plugins.davhelle.cellgraph.graphs.SpatioTemporalGraph;
@@ -17,6 +18,7 @@ import plugins.davhelle.cellgraph.graphs.SpatioTemporalGraphGenerator;
 import plugins.davhelle.cellgraph.io.CsvTrackReader;
 import plugins.davhelle.cellgraph.io.InputType;
 import plugins.davhelle.cellgraph.misc.BorderCells;
+import plugins.davhelle.cellgraph.overlays.PolygonOverlay;
 import plugins.davhelle.cellgraph.overlays.TrackIdOverlay;
 import plugins.davhelle.cellgraph.overlays.TrackingOverlay;
 
@@ -32,18 +34,21 @@ public class TestLoader extends PluginActionable {
 	@Override
 	public void run() {
 
-		//Choose location of test folder
-		JFileChooser dialog = new JFileChooser();
-		dialog.setDialogTitle("Please choose [test folder] location");
-		dialog.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+//		//Choose location of test folder
+//		JFileChooser dialog = new JFileChooser();
+//		dialog.setDialogTitle("Please choose [test folder] location");
+//		dialog.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+//		
+//		//Only proceed if the user puts in a valid directory
+//		if(dialog.showOpenDialog(null) != JFileChooser.APPROVE_OPTION)
+//			return;
+//		
+//		final File f = dialog.getSelectedFile();
+//		System.out.println(f.getAbsolutePath());
+//		String test_folder = f.getAbsolutePath();
 		
-		//Only proceed if the user puts in a valid directory
-		if(dialog.showOpenDialog(null) != JFileChooser.APPROVE_OPTION)
-			return;
-		
-		final File f = dialog.getSelectedFile();
-		System.out.println(f.getAbsolutePath());
-		String test_folder = f.getAbsolutePath();
+		String test_folder = System.getProperty("user.home");
+		test_folder += "/Dropbox/IMLS/basler/rob/TrackingFail_skel";
 		
 		//Image on which the spatio-temporal graph (stGraph) will be generated
 		String test_file_name = test_folder+"/skeletons.tif";
@@ -64,17 +69,19 @@ public class TestLoader extends PluginActionable {
 				new SpatioTemporalGraphGenerator(
 						GraphType.TISSUE_EVOLUTION,
 						test_file_wkt, 
-						10, InputType.WKT).getStGraph();
+						60, InputType.WKT).getStGraph();
 		
 		//Apply border conditions by reading the wkt border files
 		new BorderCells(test_stGraph).markBorderCellsWKT(test_folder);
 		
-		//Apply tracking by reading the saved tracking information in the CSV files 
-		new CsvTrackReader(test_stGraph, test_folder).track();
+//		//Apply tracking by reading the saved tracking information in the CSV files 
+//		new CsvTrackReader(test_stGraph, test_folder).track();
+//		
+//		//Add the tracking overlay to the input image
+//		sequence.addOverlay(new TrackIdOverlay(test_stGraph));
+//		sequence.addOverlay(new TrackingOverlay(test_stGraph, true));
 		
-		//Add the tracking overlay to the input image
-		sequence.addOverlay(new TrackIdOverlay(test_stGraph));
-		sequence.addOverlay(new TrackingOverlay(test_stGraph, true));
+		sequence.addOverlay(new PolygonOverlay(test_stGraph, Color.red));
 		
 		//remove all formerly present stGraph objects 
 		SwimmingPool icySP = Icy.getMainInterface().getSwimmingPool();
