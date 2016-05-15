@@ -2,9 +2,17 @@ package plugins.davhelle.cellgraph.overlays;
 
 import java.awt.Color;
 import java.awt.Graphics2D;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
+import java.awt.event.ActionEvent;
 import java.awt.event.MouseEvent;
 import java.awt.geom.Point2D;
 import java.awt.geom.Line2D.Double;
+
+import javax.swing.JButton;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
 
 import com.vividsolutions.jts.awt.ShapeWriter;
 import com.vividsolutions.jts.geom.Coordinate;
@@ -17,6 +25,7 @@ import icy.gui.frame.progress.AnnounceFrame;
 import icy.main.Icy;
 import icy.sequence.Sequence;
 import jxl.write.WritableSheet;
+import plugins.davhelle.cellgraph.export.BigXlsExporter;
 import plugins.davhelle.cellgraph.graphs.FrameGraph;
 import plugins.davhelle.cellgraph.graphs.SpatioTemporalGraph;
 import plugins.davhelle.cellgraph.nodes.Node;
@@ -26,6 +35,7 @@ import plugins.kernel.canvas.VtkCanvas;
 
 public class ManualTrackingOverlay extends StGraphOverlay {
 	
+	private static final String CHANGE_MODE = "Change Mode";
 	/**
 	 * JTS Geometry factory to generate segments to visualize connectivity
 	 */
@@ -34,6 +44,8 @@ public class ManualTrackingOverlay extends StGraphOverlay {
 	 * JTS to AWT shape converter
 	 */
 	private ShapeWriter writer;
+	private int visualizationMode;
+	private Node currentlyTracked;
 	
 
 	public ManualTrackingOverlay(SpatioTemporalGraph stGraph) {
@@ -41,6 +53,8 @@ public class ManualTrackingOverlay extends StGraphOverlay {
 		
 		this.factory = new GeometryFactory();
 		this.writer = new ShapeWriter();
+		this.visualizationMode = 0;
+		this.currentlyTracked = null;
 		
 		new AnnounceFrame("This will be a very cool manual tracking overlay, stay tuned!:-)");
 		
@@ -60,11 +74,43 @@ public class ManualTrackingOverlay extends StGraphOverlay {
 			for(Node cell: frame_i.vertexSet()){
 			 	if(cell.getGeometry().contains(point_geometry)){
 			 		
+			 		//insert currently displayed one
+			 		//to establish connection 
+			 		
 			 		cell.setTrackID(1);
+			 			
+			 		if(currentlyTracked != null)
+			 			linkNodes(cell,currentlyTracked);
+			 
 			 		
 			 	}
 			}
+			
+			if(time_point + 1 < stGraph.size())
+				canvas.setPositionT(time_point + 1);
+			
+			if(time_point == stGraph.size() - 1){
+				//1. give modification notice
+				//2. set user back to initial frame
+				//3. visualize the track id or some color
+				//4. Ask user to repeat.
+			}
 		}
+	}
+	
+	private void linkNodes(Node next, Node previous){
+		
+		next.setTrackID(previous.getTrackID());
+		next.setFirst(previous.getFirst());
+		next.setPrevious(previous);
+
+		//propagate division
+		if(previous.hasObservedDivision())
+			next.setDivision(previous.getDivision());
+
+		previous.setNext(next);
+
+		this.stGraph.setTracking(true);
 	}
 	
 	@Override
@@ -93,29 +139,48 @@ public class ManualTrackingOverlay extends StGraphOverlay {
 		
 		for(Node n: frame_i.vertexSet()){
 			if(n.getTrackID() == 1){
+				
+				currentlyTracked = n;
+				
 				g.setColor(new Color(255,0,255,180)); //last is alpha channel
 				g.fill(writer.toShape(n.getGeometry()));
 				
 				for(Node neighbor: n.getNeighbors()){
 					
-//					//connect to central node
-//					connectNodes(g, neighbor, n);
-//					
-//					//connect nodes among each other
-//					for(Node other: n.getNeighbors())
-//						if(neighbor != other)
-//							if(frame_i.containsEdge(neighbor, other))
-//								connectNodes(g, neighbor, other);
-					
-					//idea: only neighbor's neighbors that are 
-					//also neighbors of other n's neighbors
-					//limits amount of lines
-					for(Node nn: neighbor.getNeighbors())
-						if(frame_i.containsEdge(neighbor, nn))
-							connectNodes(g, neighbor, nn);
+					switch(visualizationMode){
+					case 0:
+						//just outline first order neighbor ring
+						g.setColor(new Color(0,0,255,180)); //last is alpha channel
+						g.draw(writer.toShape(neighbor.getGeometry()));
+						
+						g.setColor(new Color(0,255,0,180));
+						//connect to central node
+						connectNodes(g, neighbor, n);
+						
+						//connect nodes among each other
+						for(Node other: n.getNeighbors())
+							if(neighbor != other)
+								if(frame_i.containsEdge(neighbor, other))
+									connectNodes(g, neighbor, other);
+						break;
+					case 1:
+						//idea: only neighbor's neighbors that are 
+						//also neighbors of other n's neighbors
+						//limits amount of lines
+						for(Node nn: neighbor.getNeighbors())
+							if(frame_i.containsEdge(neighbor, nn))
+								connectNodes(g, neighbor, nn);
+						break;
+					case 2:
+						//display them all
+						for(Node cell: frame_i.vertexSet())
+							g.draw((cell.toShape()));
+						break;
+					default:
+						//Nothing so far
+						System.out.println("No default option yet");
+					}
 				}
-				
-				
 			}
 		}
 		
@@ -146,7 +211,20 @@ public class ManualTrackingOverlay extends StGraphOverlay {
 
 	@Override
 	public void specifyLegend(Graphics2D g, Double line) {
-		// TODO Auto-generated method stub
+		if(currentlyTracked == null){
+			String s = "Click on a cell to start tracking it";
+			Color c = Color.WHITE;
+			int offset = 0;
+
+			OverlayUtils.stringColorLegend(g, line, s, c, offset);
+		}else{
+			String s = "Now click on the best matching cell";
+			Color c = Color.WHITE;
+			int offset = 0;
+
+			OverlayUtils.stringColorLegend(g, line, s, c, offset);
+
+		}
 
 	}
 
@@ -154,6 +232,51 @@ public class ManualTrackingOverlay extends StGraphOverlay {
 	void writeFrameSheet(WritableSheet sheet, FrameGraph frame) {
 		// TODO Auto-generated method stub
 
+	}
+	
+	@Override
+	public JPanel getOptionsPanel() {
+		
+		JPanel optionPanel = new JPanel(new GridBagLayout());
+		
+		addOptionButton(optionPanel, 
+				CHANGE_MODE, "Change tracking visualization ");
+		
+        return optionPanel;
+		
+	}
+	
+	@Override
+	public void actionPerformed(ActionEvent e) {
+		
+		String cmd_string =e.getActionCommand(); 
+		
+		if(cmd_string.equals(CHANGE_MODE)){
+			visualizationMode = (visualizationMode + 1) % 3;
+			painterChanged();
+		}
+	}
+
+	/**
+	 * @param optionPanel
+	 * @param button_text
+	 * @param button_description
+	 */
+	private void addOptionButton(JPanel optionPanel, 
+			String button_text,
+			String button_description) {
+		
+		GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(2, 10, 2, 5);
+        gbc.fill = GridBagConstraints.BOTH;
+		optionPanel.add(new JLabel(button_description), gbc);
+        
+        gbc.weightx = 1;
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
+        
+		JButton Roi_Button = new JButton(button_text);
+        Roi_Button.addActionListener(this);
+        optionPanel.add(Roi_Button,gbc);
 	}
 
 }
