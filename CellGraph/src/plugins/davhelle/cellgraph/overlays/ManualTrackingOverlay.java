@@ -147,6 +147,11 @@ public class ManualTrackingOverlay extends StGraphOverlay {
 		
 		int time_point = Icy.getMainInterface().getFirstViewer(sequence).getPositionT();
 
+		if(time_point >= 0 && time_point < stGraph.size()){
+			FrameGraph frame_i = stGraph.getFrame(time_point);
+			paintTrackingIds(g, frame_i);
+		}
+		
 		//Take previous time point
 		time_point--;
 		
@@ -159,14 +164,35 @@ public class ManualTrackingOverlay extends StGraphOverlay {
 			paintLegend(g,sequence,canvas);
 		
     }
+	
+	public void paintTrackingIds(Graphics2D g, FrameGraph frame_i)
+	{
+
+		int fontSize = 20;
+		g.setFont(new Font("TimesRoman", Font.PLAIN, fontSize));
+		g.setColor(Color.CYAN);
+
+		for(Node cell: frame_i.vertexSet()){
+
+			if(cell.getTrackID() != -1){ 
+
+				Coordinate centroid = cell.getCentroid().getCoordinate();
+
+				g.drawString(Integer.toString(cell.getTrackID()), 
+						(float)centroid.x - 2  , 
+						(float)centroid.y + 2);
+			}
+
+		}		
+	}
 
 	@Override
 	public void paintFrame(Graphics2D g, FrameGraph frame_i) {
 		
 		for(Node n: frame_i.vertexSet()){
-			if(n.getTrackID() == 1){
+			if(n.getTrackID() == currentlyTrackedId){
 				
-				currentlyTracked = n;
+				currentlyTrackedCell = n;
 				
 				g.setColor(new Color(255,0,255,180)); //last is alpha channel
 				g.fill(writer.toShape(n.getGeometry()));
@@ -176,7 +202,7 @@ public class ManualTrackingOverlay extends StGraphOverlay {
 					switch(visualizationMode){
 					case 0:
 						//just outline first order neighbor ring
-						g.setColor(new Color(0,0,255,180)); //last is alpha channel
+						g.setColor(new Color(255,0,255,180)); //last is alpha channel
 						g.draw(writer.toShape(neighbor.getGeometry()));
 						
 						g.setColor(new Color(0,255,0,180));
@@ -190,12 +216,15 @@ public class ManualTrackingOverlay extends StGraphOverlay {
 									connectNodes(g, neighbor, other);
 						break;
 					case 1:
-						//idea: only neighbor's neighbors that are 
-						//also neighbors of other n's neighbors
-						//limits amount of lines
-						for(Node nn: neighbor.getNeighbors())
+						//Neighbors connections only
+						for(Node nn: neighbor.getNeighbors()){
 							if(frame_i.containsEdge(neighbor, nn))
 								connectNodes(g, neighbor, nn);
+							for(Node nnn: nn.getNeighbors())
+								if(frame_i.containsEdge(nnn, nn))
+									connectNodes(g, nnn, nn);
+							
+						}
 						break;
 					case 2:
 						//display them all
