@@ -1,26 +1,22 @@
 package plugins.davhelle.cellgraph;
 
+import java.awt.Color;
+import java.io.File;
+
+import javax.swing.JFileChooser;
+
 import icy.file.Loader;
 import icy.main.Icy;
 import icy.plugin.abstract_.PluginActionable;
 import icy.sequence.Sequence;
 import icy.swimmingPool.SwimmingObject;
 import icy.swimmingPool.SwimmingPool;
-
-import java.awt.Color;
-import java.io.File;
-
-//import javax.swing.JFileChooser;
-
 import plugins.davhelle.cellgraph.graphs.GraphType;
 import plugins.davhelle.cellgraph.graphs.SpatioTemporalGraph;
 import plugins.davhelle.cellgraph.graphs.SpatioTemporalGraphGenerator;
-import plugins.davhelle.cellgraph.io.CsvTrackReader;
 import plugins.davhelle.cellgraph.io.InputType;
 import plugins.davhelle.cellgraph.misc.BorderCells;
 import plugins.davhelle.cellgraph.overlays.PolygonOverlay;
-import plugins.davhelle.cellgraph.overlays.TrackIdOverlay;
-import plugins.davhelle.cellgraph.overlays.TrackingOverlay;
 
 /**
  * Test plugin to automatically load a test image and the connected graph.
@@ -34,21 +30,21 @@ public class TestLoader extends PluginActionable {
 	@Override
 	public void run() {
 
-//		//Choose location of test folder
-//		JFileChooser dialog = new JFileChooser();
-//		dialog.setDialogTitle("Please choose [test folder] location");
-//		dialog.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-//		
-//		//Only proceed if the user puts in a valid directory
-//		if(dialog.showOpenDialog(null) != JFileChooser.APPROVE_OPTION)
-//			return;
-//		
-//		final File f = dialog.getSelectedFile();
-//		System.out.println(f.getAbsolutePath());
-//		String test_folder = f.getAbsolutePath();
+		//Choose location of test folder
+		JFileChooser dialog = new JFileChooser();
+		dialog.setDialogTitle("Please choose [test folder] location");
+		dialog.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
 		
-		String test_folder = System.getProperty("user.home");
-		test_folder += "/Dropbox/IMLS/basler/rob/TrackingFail_skel";
+		//Only proceed if the user puts in a valid directory
+		if(dialog.showOpenDialog(null) != JFileChooser.APPROVE_OPTION)
+			return;
+		
+		final File f = dialog.getSelectedFile();
+		System.out.println(f.getAbsolutePath());
+		String test_folder = f.getAbsolutePath();
+		
+//		String test_folder = System.getProperty("user.home");
+//		test_folder += "/Dropbox/IMLS/basler/rob/TrackingFail_skel";
 		
 		//Image on which the spatio-temporal graph (stGraph) will be generated
 		String test_file_name = test_folder+"/skeletons.tif";
