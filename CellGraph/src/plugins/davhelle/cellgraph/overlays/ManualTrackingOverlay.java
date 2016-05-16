@@ -1,14 +1,16 @@
 package plugins.davhelle.cellgraph.overlays;
 
 import java.awt.Color;
+import java.awt.Font;
 import java.awt.Graphics2D;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
-import java.awt.geom.Point2D;
 import java.awt.geom.Line2D.Double;
+import java.awt.geom.Point2D;
 
 import javax.swing.JButton;
 import javax.swing.JLabel;
@@ -21,11 +23,10 @@ import com.vividsolutions.jts.geom.LineString;
 import com.vividsolutions.jts.geom.Point;
 
 import icy.canvas.IcyCanvas;
-import icy.gui.frame.progress.AnnounceFrame;
 import icy.main.Icy;
 import icy.sequence.Sequence;
+import icy.type.point.Point5D;
 import jxl.write.WritableSheet;
-import plugins.davhelle.cellgraph.export.BigXlsExporter;
 import plugins.davhelle.cellgraph.graphs.FrameGraph;
 import plugins.davhelle.cellgraph.graphs.SpatioTemporalGraph;
 import plugins.davhelle.cellgraph.nodes.Node;
@@ -45,7 +46,10 @@ public class ManualTrackingOverlay extends StGraphOverlay {
 	 */
 	private ShapeWriter writer;
 	private int visualizationMode;
-	private Node currentlyTracked;
+	private Node currentlyTrackedCell;
+	private int currentlyTrackedId;
+	private String currentLegend;
+	private boolean insertionLock;
 	
 
 	public ManualTrackingOverlay(SpatioTemporalGraph stGraph) {
@@ -54,15 +58,38 @@ public class ManualTrackingOverlay extends StGraphOverlay {
 		this.factory = new GeometryFactory();
 		this.writer = new ShapeWriter();
 		this.visualizationMode = 0;
-		this.currentlyTracked = null;
 		
-		new AnnounceFrame("This will be a very cool manual tracking overlay, stay tuned!:-)");
+		//find highest currently used tracking id
+		currentlyTrackedId = 0;
+		for(Node n: stGraph.getFrame(0).vertexSet())
+			if(n.getTrackID() >= currentlyTrackedId)
+				currentlyTrackedId = n.getTrackID() + 1;
 		
+		this.currentlyTrackedCell = null;
+		this.currentLegend = "Click on a cell to start tracking it";
+		this.insertionLock = false;
+	}
+	
+	@Override
+	public void keyPressed(KeyEvent e, Point5D.Double imagePoint, IcyCanvas canvas)
+	{
+		if (e.getKeyCode() == KeyEvent.VK_SPACE){
+			currentlyTrackedId++;
+			currentlyTrackedCell = null;
+			
+			canvas.setPositionT(0);
+
+			insertionLock = false;
+			currentLegend = "Reset! Click on a cell to start tracking the next cell";
+		}
 	}
 	
 	@Override
 	public void mouseClick(MouseEvent e, Point2D imagePoint, IcyCanvas canvas){
 		int time_point = canvas.getPositionT();
+		
+		if(insertionLock)
+			return;
 		
 		if(time_point < stGraph.size()){
 			
@@ -76,24 +103,23 @@ public class ManualTrackingOverlay extends StGraphOverlay {
 			 		
 			 		//insert currently displayed one
 			 		//to establish connection 
-			 		
-			 		cell.setTrackID(1);
 			 			
-			 		if(currentlyTracked != null)
-			 			linkNodes(cell,currentlyTracked);
-			 
-			 		
+			 		if(currentlyTrackedCell != null)
+			 			linkNodes(cell,currentlyTrackedCell);
+			 		else
+			 			cell.setTrackID(currentlyTrackedId);
 			 	}
 			}
 			
-			if(time_point + 1 < stGraph.size())
+			if(time_point + 1 < stGraph.size()){
 				canvas.setPositionT(time_point + 1);
+				currentLegend = "Now click on the best matching cell";
+			}
 			
 			if(time_point == stGraph.size() - 1){
-				//1. give modification notice
-				//2. set user back to initial frame
-				//3. visualize the track id or some color
-				//4. Ask user to repeat.
+				//1. give modification notice & Ask user to repeat.
+				currentLegend = "Tracking Completed! To start next cell press [SPACE]";
+				insertionLock = true;
 			}
 		}
 	}
@@ -211,21 +237,11 @@ public class ManualTrackingOverlay extends StGraphOverlay {
 
 	@Override
 	public void specifyLegend(Graphics2D g, Double line) {
-		if(currentlyTracked == null){
-			String s = "Click on a cell to start tracking it";
-			Color c = Color.WHITE;
-			int offset = 0;
+		String s = currentLegend;
+		Color c = Color.WHITE;
+		int offset = 0;
 
-			OverlayUtils.stringColorLegend(g, line, s, c, offset);
-		}else{
-			String s = "Now click on the best matching cell";
-			Color c = Color.WHITE;
-			int offset = 0;
-
-			OverlayUtils.stringColorLegend(g, line, s, c, offset);
-
-		}
-
+		OverlayUtils.stringColorLegend(g, line, s, c, offset);
 	}
 
 	@Override
