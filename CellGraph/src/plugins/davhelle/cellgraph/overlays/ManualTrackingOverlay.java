@@ -27,8 +27,10 @@ import icy.main.Icy;
 import icy.sequence.Sequence;
 import icy.type.point.Point5D;
 import jxl.write.WritableSheet;
+import plugins.adufour.ezplug.EzVarEnum;
 import plugins.davhelle.cellgraph.graphs.FrameGraph;
 import plugins.davhelle.cellgraph.graphs.SpatioTemporalGraph;
+import plugins.davhelle.cellgraph.misc.CellColor;
 import plugins.davhelle.cellgraph.nodes.Node;
 import plugins.kernel.canvas.VtkCanvas;
 
@@ -50,14 +52,16 @@ public class ManualTrackingOverlay extends StGraphOverlay {
 	private int currentlyTrackedId;
 	private String currentLegend;
 	private boolean insertionLock;
+	EzVarEnum<CellColor> 		varPolygonColor;
 	
 
-	public ManualTrackingOverlay(SpatioTemporalGraph stGraph) {
+	public ManualTrackingOverlay(SpatioTemporalGraph stGraph, EzVarEnum<CellColor> varPolygonColor) {
 		super("Manual Tracking", stGraph);
 		
 		this.factory = new GeometryFactory();
 		this.writer = new ShapeWriter();
-		this.visualizationMode = 0;
+		this.visualizationMode = 2;
+		this.varPolygonColor = varPolygonColor;
 		
 		//find highest currently used tracking id
 		currentlyTrackedId = 0;
@@ -194,48 +198,24 @@ public class ManualTrackingOverlay extends StGraphOverlay {
 				
 				currentlyTrackedCell = n;
 				
-				g.setColor(new Color(255,0,255,180)); //last is alpha channel
+				Color userColor = varPolygonColor.getValue().getColor();
+				int userR = userColor.getRed();
+				int userG = userColor.getGreen();
+				int userB = userColor.getBlue();
+				int alpha = 180;
+
+				//Show tracked cell completely filled
+				Color displayColor = new Color(userR,userG,userB,alpha);
+				g.setColor(displayColor);
 				g.fill(writer.toShape(n.getGeometry()));
+				//long f3 = System.currentTimeMillis();
 				
-				for(Node neighbor: n.getNeighbors()){
-					
-					switch(visualizationMode){
-					case 0:
-						//just outline first order neighbor ring
-						g.setColor(new Color(255,0,255,180)); //last is alpha channel
-						g.draw(writer.toShape(neighbor.getGeometry()));
-						
-						g.setColor(new Color(0,255,0,180));
-						//connect to central node
-						connectNodes(g, neighbor, n);
-						
-						//connect nodes among each other
-						for(Node other: n.getNeighbors())
-							if(neighbor != other)
-								if(frame_i.containsEdge(neighbor, other))
-									connectNodes(g, neighbor, other);
-						break;
-					case 1:
-						//Neighbors connections only
-						for(Node nn: neighbor.getNeighbors()){
-							if(frame_i.containsEdge(neighbor, nn))
-								connectNodes(g, neighbor, nn);
-							for(Node nnn: nn.getNeighbors())
-								if(frame_i.containsEdge(nnn, nn))
-									connectNodes(g, nnn, nn);
-							
-						}
-						break;
-					case 2:
-						//display them all
-						for(Node cell: frame_i.vertexSet())
-							g.draw((cell.toShape()));
-						break;
-					default:
-						//Nothing so far
-						System.out.println("No default option yet");
-					}
-				}
+				//display them all to help identification (scheme 3)
+				for(Node cell: frame_i.vertexSet())
+					g.draw(writer.toShape(cell.getGeometry()));
+				
+				//f3 = System.currentTimeMillis() - f3;
+				//System.out.printf("%d: Visualized Tracking in %d ms\n",System.currentTimeMillis(),f3);
 			}
 		}
 		
