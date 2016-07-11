@@ -19,7 +19,6 @@ public abstract class TrackingAlgorithm {
 
 	protected SpatioTemporalGraph stGraph;
 	protected Geometry frame_0_union;
-	protected int tracking_id;
 	
 	/**
 	 * Constructor methods should always initialize the spatio temporal graph
@@ -49,9 +48,6 @@ public abstract class TrackingAlgorithm {
 	 */
 	private void initializeFirstFrame(){
 		
-		//first set trackID and geometry of first graph (reference)
-		tracking_id = 0;
-		
 		//Now process the first frame and record it's new geometry
 		FrameGraph first_frame = stGraph.getFrame(0);
 		Geometry[] output = new Geometry[first_frame.size()];
@@ -61,6 +57,8 @@ public abstract class TrackingAlgorithm {
 		
 		for(Node n: first_frame.vertexSet()){
 			
+			int tracking_id = stGraph.getNewTrackingId();
+			
 			//initialize fields
 			n.setTrackID(tracking_id);
 			n.setFirst(n);
@@ -68,7 +66,6 @@ public abstract class TrackingAlgorithm {
 			//extract geometry
 			output[tracking_id] = n.getGeometry();
 			
-			tracking_id++;
 		}
 
 		//Create union of all polygons to find the boundary

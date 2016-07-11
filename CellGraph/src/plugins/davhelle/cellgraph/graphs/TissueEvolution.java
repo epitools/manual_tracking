@@ -29,12 +29,18 @@ public class TissueEvolution implements SpatioTemporalGraph {
 	private boolean has_ellipse_fitting;
 	
 	/**
+	 * Counter keeping the count of assigned trackingIds
+	 */
+	private int newTrackingID;
+	
+	/**
 	 * Initialization with number of time points
 	 */
 	public TissueEvolution(int time_points) {
 		this.has_tracking = false;
 		this.has_voronoi = false;
 		this.has_ellipse_fitting = false;
+		this.newTrackingID = 0;
 		this.frames = new ArrayList<FrameGraph>(time_points);
 	}
 	
@@ -101,6 +107,21 @@ public class TissueEvolution implements SpatioTemporalGraph {
 	@Override
 	public void setEllipseFitting(boolean new_state) {
 		this.has_ellipse_fitting = new_state;  
+	}
+
+	@Override
+	public int getNewTrackingId() {
+		return newTrackingID++;
+	}
+
+	@Override
+	public int getCurrentTrackingId() {
+		return newTrackingID - 1;
+	}
+
+	@Override
+	public void updateTrackingId(int trackingId) {
+		newTrackingID = trackingId + 1;
 	}
 
 }

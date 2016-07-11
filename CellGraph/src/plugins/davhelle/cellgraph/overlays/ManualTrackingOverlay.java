@@ -49,7 +49,6 @@ public class ManualTrackingOverlay extends StGraphOverlay {
 	private ShapeWriter writer;
 	private int visualizationMode;
 	private Node currentlyTrackedCell;
-	private int currentlyTrackedId;
 	private String currentLegend;
 	private boolean insertionLock;
 	EzVarEnum<CellColor> 		varPolygonColor;
@@ -63,12 +62,6 @@ public class ManualTrackingOverlay extends StGraphOverlay {
 		this.visualizationMode = 2;
 		this.varPolygonColor = varPolygonColor;
 		
-		//find highest currently used tracking id
-		currentlyTrackedId = 0;
-		for(Node n: stGraph.getFrame(0).vertexSet())
-			if(n.getTrackID() >= currentlyTrackedId)
-				currentlyTrackedId = n.getTrackID() + 1;
-		
 		this.currentlyTrackedCell = null;
 		this.currentLegend = "Click on a cell to start tracking it";
 		this.insertionLock = false;
@@ -78,7 +71,6 @@ public class ManualTrackingOverlay extends StGraphOverlay {
 	public void keyPressed(KeyEvent e, Point5D.Double imagePoint, IcyCanvas canvas)
 	{
 		if (e.getKeyCode() == KeyEvent.VK_SPACE){
-			currentlyTrackedId++;
 			currentlyTrackedCell = null;
 			
 			canvas.setPositionT(0);
@@ -111,13 +103,16 @@ public class ManualTrackingOverlay extends StGraphOverlay {
 			 		if(currentlyTrackedCell != null)
 			 			linkNodes(cell,currentlyTrackedCell);
 			 		else
-			 			cell.setTrackID(currentlyTrackedId);
+			 			cell.setTrackID(stGraph.getNewTrackingId());
+			 		
+			 		//update
+			 		currentlyTrackedCell = cell;
 			 	}
 			}
 			
 			if(time_point + 1 < stGraph.size()){
 				canvas.setPositionT(time_point + 1);
-				currentLegend = "Now click on the best matching cell";
+				currentLegend = "Now click on the best matching cell [press SPACE to abort]";
 			}
 			
 			if(time_point == stGraph.size() - 1){
@@ -133,7 +128,15 @@ public class ManualTrackingOverlay extends StGraphOverlay {
 		next.setTrackID(previous.getTrackID());
 		next.setFirst(previous.getFirst());
 		next.setPrevious(previous);
-
+		
+		//update tracking ID for future cells
+		Node future = next;
+		future.setTrackID(next.getTrackID());
+		while(future.hasNext()){
+			future = future.getNext();
+			future.setTrackID(next.getTrackID());
+		}
+		
 		//propagate division
 		if(previous.hasObservedDivision())
 			next.setDivision(previous.getDivision());
@@ -153,7 +156,7 @@ public class ManualTrackingOverlay extends StGraphOverlay {
 
 		if(time_point >= 0 && time_point < stGraph.size()){
 			FrameGraph frame_i = stGraph.getFrame(time_point);
-			paintTrackingIds(g, frame_i);
+			//paintTrackingIds(g, frame_i);
 		}
 		
 		//Take previous time point
@@ -193,30 +196,26 @@ public class ManualTrackingOverlay extends StGraphOverlay {
 	@Override
 	public void paintFrame(Graphics2D g, FrameGraph frame_i) {
 		
-		for(Node n: frame_i.vertexSet()){
-			if(n.getTrackID() == currentlyTrackedId){
+		if(frame_i.containsVertex(currentlyTrackedCell)){
 				
-				currentlyTrackedCell = n;
-				
-				Color userColor = varPolygonColor.getValue().getColor();
-				int userR = userColor.getRed();
-				int userG = userColor.getGreen();
-				int userB = userColor.getBlue();
-				int alpha = 180;
+			Color userColor = varPolygonColor.getValue().getColor();
+			int userR = userColor.getRed();
+			int userG = userColor.getGreen();
+			int userB = userColor.getBlue();
+			int alpha = 180;
 
-				//Show tracked cell completely filled
-				Color displayColor = new Color(userR,userG,userB,alpha);
-				g.setColor(displayColor);
-				g.fill(writer.toShape(n.getGeometry()));
-				//long f3 = System.currentTimeMillis();
-				
-				//display them all to help identification (scheme 3)
-				for(Node cell: frame_i.vertexSet())
-					g.draw(writer.toShape(cell.getGeometry()));
-				
-				//f3 = System.currentTimeMillis() - f3;
-				//System.out.printf("%d: Visualized Tracking in %d ms\n",System.currentTimeMillis(),f3);
-			}
+			//Show tracked cell completely filled
+			Color displayColor = new Color(userR,userG,userB,alpha);
+			g.setColor(displayColor);
+			g.fill(writer.toShape(currentlyTrackedCell.getGeometry()));
+			//long f3 = System.currentTimeMillis();
+			
+			//display them all to help identification (scheme 3)
+			for(Node cell: frame_i.vertexSet())
+				g.draw(writer.toShape(cell.getGeometry()));
+			
+			//f3 = System.currentTimeMillis() - f3;
+			//System.out.printf("%d: Visualized Tracking in %d ms\n",System.currentTimeMillis(),f3);
 		}
 		
 		//get neighbors of cell and draw the connectivity graph

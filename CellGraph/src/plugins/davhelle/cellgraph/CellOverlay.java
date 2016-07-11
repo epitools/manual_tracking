@@ -341,7 +341,7 @@ public class CellOverlay extends EzPlug implements EzVarListener<OverlayEnum>{
 				varLoadAllSurfaceFiles);
 		
 		//Manual tracking
-		varTrackingColor = new EzVarEnum<CellColor>("Manual tracking color", CellColor.values(),CellColor.RED);
+		varTrackingColor = new EzVarEnum<CellColor>("Manual tracking color", CellColor.values(),CellColor.WHITE);
 		EzGroup groupManualTracking = new EzGroup("Overlay elements",
 				varTrackingColor);
 		

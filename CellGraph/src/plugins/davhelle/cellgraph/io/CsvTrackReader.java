@@ -53,6 +53,11 @@ public class CsvTrackReader extends TrackingAlgorithm{
 	public static final String elimination_file_pattern = "eliminations.csv";
 	
 	/**
+	 * Maximum Tracking integer to update stGraph  
+	 */
+	private int highestTrackingId = 0;
+	
+	/**
 	 * Set up the reader
 	 * 
 	 * @param stGraph spatio-temporal graph to apply the tracking to
@@ -76,6 +81,7 @@ public class CsvTrackReader extends TrackingAlgorithm{
 		readDivisions();
 		readEliminations();
 		stGraph.setTracking(true);
+		stGraph.updateTrackingId(highestTrackingId);
 		System.out.println("Successfully read tracking form: "+input_directory);
 	}
 	
@@ -195,6 +201,8 @@ public class CsvTrackReader extends TrackingAlgorithm{
 			    				matching_cell.setFirst(matching_cell);
 			    		}			    					    		
 			    		
+			    		if(cell_id > highestTrackingId)
+			    			highestTrackingId = cell_id;
 			    		
 			    		break;
 			    	case DIVISION:

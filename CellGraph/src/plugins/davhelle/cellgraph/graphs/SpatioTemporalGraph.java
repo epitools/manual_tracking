@@ -36,12 +36,31 @@ public interface SpatioTemporalGraph {
 	 */
 	public int size();
 	
+	/**
+	 * Get a new tracking ID to assign to a cell
+	 * 
+	 * @return integer tracking ID
+	 */
+	public int getNewTrackingId();
 	
+	/**
+	 * Get the last assigned TrackingID
+	 * 
+	 * @return integer tracking ID
+	 */
+	public int getCurrentTrackingId();
+	
+	/**
+	 * Update TrackingID with custom value, e.g. csv tracking loading
+	 * 
+	 * @param max_tracking_int
+	 */
+	public void updateTrackingId(int trackingId);
+
 	/** 
 	 * @return if tracking has been applied to the nodes
 	 */
 	public boolean hasTracking();
-	
 	
 	/**
 	 * @return if a voronoi diagram has been computed for the nodes
@@ -69,4 +88,5 @@ public interface SpatioTemporalGraph {
 	 * @param new_state
 	 */
 	public void setEllipseFitting(boolean new_state);
+
 }

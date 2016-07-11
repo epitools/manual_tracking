@@ -704,8 +704,12 @@ public abstract class GraphTracking extends TrackingAlgorithm {
 			
 			
 			//mark as successful division
+			int tracking_id = stGraph.getCurrentTrackingId();
 			Division division = new Division(mother , brother1, brother2, tracking_id);
-			tracking_id = tracking_id + 2;
+			
+			//augment for assigned brother ids
+			stGraph.getNewTrackingId();
+			stGraph.getNewTrackingId();
 			
 			System.out.println(division.toString());
 		
