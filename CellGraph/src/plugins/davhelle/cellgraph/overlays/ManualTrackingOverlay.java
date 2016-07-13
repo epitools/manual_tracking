@@ -112,7 +112,7 @@ public class ManualTrackingOverlay extends StGraphOverlay {
 			
 			if(time_point + 1 < stGraph.size()){
 				canvas.setPositionT(time_point + 1);
-				currentLegend = "Now click on the best matching cell [press SPACE to abort]";
+				currentLegend = "Now click on the best matching cell [press SPACE to restart (ENTER to propagate & restart) ]";
 			}
 			
 			if(time_point == stGraph.size() - 1){
@@ -125,25 +125,37 @@ public class ManualTrackingOverlay extends StGraphOverlay {
 	
 	private void linkNodes(Node next, Node previous){
 		
+		//unlink previous if already linked?
+		if(next.hasPrevious()){
+			Node oldPrevious = next.getPrevious();
+			oldPrevious.setNext(null);
+		}
+		
+		//Attach new track
 		next.setTrackID(previous.getTrackID());
 		next.setFirst(previous.getFirst());
 		next.setPrevious(previous);
 		
-		//update tracking ID for future cells
-		Node future = next;
-		future.setTrackID(next.getTrackID());
-		while(future.hasNext()){
-			future = future.getNext();
-			future.setTrackID(next.getTrackID());
-		}
-		
+				
 		//propagate division
 		if(previous.hasObservedDivision())
 			next.setDivision(previous.getDivision());
 
 		previous.setNext(next);
+		previous.setErrorTag(-1);
 
 		this.stGraph.setTracking(true);
+	}
+	
+	private void propagateCurrentTrackedCell(){
+		//update tracking ID for future cells
+		Node future = currentlyTrackedCell;
+		while(future.hasNext()){
+			future = future.getNext();
+			future.setTrackID(currentlyTrackedCell.getTrackID());
+			future.setFirst(currentlyTrackedCell.getFirst());
+		}
+
 	}
 	
 	@Override

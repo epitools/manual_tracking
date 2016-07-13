@@ -18,6 +18,8 @@ import plugins.davhelle.cellgraph.graphs.SpatioTemporalGraph;
 import plugins.davhelle.cellgraph.nodes.Division;
 import plugins.davhelle.cellgraph.nodes.Node;
 
+import com.vividsolutions.jts.awt.ShapeWriter;
+import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.geom.Point;
 
 /**
@@ -52,6 +54,7 @@ public class TrackingOverlay extends StGraphOverlay{
 	 * A Random bright color for each cell
 	 */
 	private HashMap<Node,Color> correspondence_color;
+	
 	/**
 	 * A static color map for each error type
 	 */
@@ -136,7 +139,7 @@ public class TrackingOverlay extends StGraphOverlay{
 	{
 
 		double percentage_tracked = 0;
-
+		ShapeWriter writer = new ShapeWriter();
 		for(Node cell: frame.vertexSet()){
 
 			if(cell.getTrackID() != -1){
@@ -145,8 +148,13 @@ public class TrackingOverlay extends StGraphOverlay{
 					//cell is part of registered correspondence
 					g.setColor(correspondence_color.get(cell.getFirst()));
 
-					if(highlightMistakes)
-						g.draw(cell.toShape());
+					if(highlightMistakes){
+						
+						Geometry geo = cell.getGeometry();
+						Geometry inner = geo.difference(geo.buffer(-3.0));
+						
+						g.draw(writer.toShape(inner));
+					}
 					else
 						g.fill(cell.toShape());
 

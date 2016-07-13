@@ -14,9 +14,12 @@ import icy.swimmingPool.SwimmingPool;
 import plugins.davhelle.cellgraph.graphs.GraphType;
 import plugins.davhelle.cellgraph.graphs.SpatioTemporalGraph;
 import plugins.davhelle.cellgraph.graphs.SpatioTemporalGraphGenerator;
+import plugins.davhelle.cellgraph.io.CsvTrackReader;
 import plugins.davhelle.cellgraph.io.InputType;
 import plugins.davhelle.cellgraph.misc.BorderCells;
 import plugins.davhelle.cellgraph.overlays.PolygonOverlay;
+import plugins.davhelle.cellgraph.overlays.TrackIdOverlay;
+import plugins.davhelle.cellgraph.overlays.TrackingOverlay;
 
 /**
  * Test plugin to automatically load a test image and the connected graph.
@@ -65,19 +68,19 @@ public class TestLoader extends PluginActionable {
 				new SpatioTemporalGraphGenerator(
 						GraphType.TISSUE_EVOLUTION,
 						test_file_wkt, 
-						60, InputType.WKT).getStGraph();
+						sequence.getSizeT(), InputType.WKT).getStGraph();
 		
 		//Apply border conditions by reading the wkt border files
 		new BorderCells(test_stGraph).markBorderCellsWKT(test_folder);
 		
 //		//Apply tracking by reading the saved tracking information in the CSV files 
-//		new CsvTrackReader(test_stGraph, test_folder).track();
+		new CsvTrackReader(test_stGraph, test_folder).track();
 //		
 //		//Add the tracking overlay to the input image
-//		sequence.addOverlay(new TrackIdOverlay(test_stGraph));
-//		sequence.addOverlay(new TrackingOverlay(test_stGraph, true));
+		sequence.addOverlay(new TrackIdOverlay(test_stGraph));
+		sequence.addOverlay(new TrackingOverlay(test_stGraph, true));
 		
-		sequence.addOverlay(new PolygonOverlay(test_stGraph, Color.red));
+//		sequence.addOverlay(new PolygonOverlay(test_stGraph, Color.red));
 		
 		//remove all formerly present stGraph objects 
 		SwimmingPool icySP = Icy.getMainInterface().getSwimmingPool();
