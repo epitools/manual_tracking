@@ -78,6 +78,15 @@ public class ManualTrackingOverlay extends StGraphOverlay {
 			insertionLock = false;
 			currentLegend = "Reset! Click on a cell to start tracking the next cell";
 		}
+		else (e.getKeyCode() == KeyEvent.VK_ENTER){
+			propagateCurrentTrackedCell();
+
+			currentlyTrackedCell = null;
+			canvas.setPositionT(0);
+
+			insertionLock = false;
+			currentLegend = "Reset! Click on a cell to start tracking the next cell";
+		}
 	}
 	
 	@Override
