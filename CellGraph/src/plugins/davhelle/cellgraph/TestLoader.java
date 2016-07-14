@@ -73,14 +73,19 @@ public class TestLoader extends PluginActionable {
 		//Apply border conditions by reading the wkt border files
 		new BorderCells(test_stGraph).markBorderCellsWKT(test_folder);
 		
-//		//Apply tracking by reading the saved tracking information in the CSV files 
-		new CsvTrackReader(test_stGraph, test_folder).track();
-//		
-//		//Add the tracking overlay to the input image
-		sequence.addOverlay(new TrackIdOverlay(test_stGraph));
-		sequence.addOverlay(new TrackingOverlay(test_stGraph, true));
-		
-//		sequence.addOverlay(new PolygonOverlay(test_stGraph, Color.red));
+		//Apply tracking if CSV information in present
+		File trackingFile = new File(test_folder+"/tracking_t000.csv");
+		if(trackingFile.exists()){
+			//Read tracking from CSV format 
+			new CsvTrackReader(test_stGraph, test_folder).track();
+
+			//Add the tracking overlay to the input image
+			sequence.addOverlay(new TrackIdOverlay(test_stGraph));
+			sequence.addOverlay(new TrackingOverlay(test_stGraph, true));
+		}else{
+			//Add normal polygon overlay
+			sequence.addOverlay(new PolygonOverlay(test_stGraph, Color.red));
+		}
 		
 		//remove all formerly present stGraph objects 
 		SwimmingPool icySP = Icy.getMainInterface().getSwimmingPool();
