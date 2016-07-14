@@ -217,6 +217,18 @@ public class ManualTrackingOverlay extends StGraphOverlay {
 	@Override
 	public void paintFrame(Graphics2D g, FrameGraph frame_i) {
 		
+		//TODO	compare frame_i time point with the one of currentlyTrackedCell
+		//	if the time point is immediately before, then assume that the 
+		//TODO	user wants to correct his assignment. For this create a field
+		//	that saves the link which (optional) assigned previously. By
+		//	clicking on any other cell the user switches the assignment
+		//	done. Make sure to save everythig which was overritten (e.g. error_Tag too)
+		//	Once reverted continue normally;
+		//TODO	Change the Message when the user is going back a frame
+		//TODO	Allow for skipping a frame (already possible?), maybe allert the user
+		//	or just advise him that he is skipping frames when navigating beyond t+1. Keep t overlay!
+		//TODO	Error tags could be based on instant lookup (e.g. is cell.next in the t+1 frame?)
+		
 		if(frame_i.containsVertex(currentlyTrackedCell)){
 				
 			Color userColor = varPolygonColor.getValue().getColor();
@@ -238,14 +250,6 @@ public class ManualTrackingOverlay extends StGraphOverlay {
 			//f3 = System.currentTimeMillis() - f3;
 			//System.out.printf("%d: Visualized Tracking in %d ms\n",System.currentTimeMillis(),f3);
 		}
-		
-		//get neighbors of cell and draw the connectivity graph
-		//by testing the presence of edges, such to find
-		//the circle surrounding the cell that should be tracked
-		
-		//add the track id!
-		
-		//TODO add click response for user
 
 	}
 
