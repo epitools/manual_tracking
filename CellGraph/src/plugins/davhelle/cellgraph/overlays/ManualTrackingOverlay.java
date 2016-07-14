@@ -53,6 +53,8 @@ public class ManualTrackingOverlay extends StGraphOverlay {
 	private boolean insertionLock;
 	EzVarEnum<CellColor> 		varPolygonColor;
 	
+	private Node detachedCell;
+	
 
 	public ManualTrackingOverlay(SpatioTemporalGraph stGraph, EzVarEnum<CellColor> varPolygonColor) {
 		super("Manual Tracking", stGraph);
@@ -65,28 +67,40 @@ public class ManualTrackingOverlay extends StGraphOverlay {
 		this.currentlyTrackedCell = null;
 		this.currentLegend = "Click on a cell to start tracking it";
 		this.insertionLock = false;
+		this.setPriority(OverlayPriority.TOPMOST);
 	}
 	
 	@Override
 	public void keyPressed(KeyEvent e, Point5D.Double imagePoint, IcyCanvas canvas)
 	{
-		if (e.getKeyCode() == KeyEvent.VK_SPACE){
-			currentlyTrackedCell = null;
-			
-			canvas.setPositionT(0);
-
-			insertionLock = false;
-			currentLegend = "Reset! Click on a cell to start tracking the next cell";
+		if(currentlyTrackedCell != null){
+			if (e.getKeyCode() == KeyEvent.VK_SPACE){
+				resetTracking(canvas);
+			}
+			else if(e.getKeyCode() == KeyEvent.VK_P){
+				propagateCurrentTrackedCell();
+				resetTracking(canvas);
+			}
+			else if(e.getKeyCode() == KeyEvent.VK_E){
+				eliminateCurrentTrackedCell();
+				resetTracking(canvas);
+			}
+			else if(e.getKeyCode() == KeyEvent.VK_R){
+				//REDO
+				currentlyTrackedCell = currentlyTrackedCell.getPrevious();
+				linkNodes(currentlyTrackedCell.getNext(), detachedCell);
+				
+				canvas.setPositionT(canvas.getPositionT() - 1);
+			}
 		}
-		else (e.getKeyCode() == KeyEvent.VK_ENTER){
-			propagateCurrentTrackedCell();
+	}
 
-			currentlyTrackedCell = null;
-			canvas.setPositionT(0);
+	private void resetTracking(IcyCanvas canvas) {
+		currentlyTrackedCell = null;
+		canvas.setPositionT(0);
 
-			insertionLock = false;
-			currentLegend = "Reset! Click on a cell to start tracking the next cell";
-		}
+		insertionLock = false;
+		currentLegend = "Reset! Click on a cell to start tracking the next cell";
 	}
 	
 	@Override
@@ -121,7 +135,10 @@ public class ManualTrackingOverlay extends StGraphOverlay {
 			
 			if(time_point + 1 < stGraph.size()){
 				canvas.setPositionT(time_point + 1);
-				currentLegend = "Now click on the best matching cell [press SPACE to restart (ENTER to propagate & restart) ]";
+				currentLegend = "Now: click to link a cell or press "
+						+ "P[propagate];"
+						+ "E[eliminate];"
+						+ "R[redo last]";
 			}
 			
 			if(time_point == stGraph.size() - 1){
@@ -138,22 +155,34 @@ public class ManualTrackingOverlay extends StGraphOverlay {
 		if(next.hasPrevious()){
 			Node oldPrevious = next.getPrevious();
 			oldPrevious.setNext(null);
+			detachedCell = oldPrevious;
+		}
+		else{
+			detachedCell = null;
 		}
 		
-		//Attach new track
-		next.setTrackID(previous.getTrackID());
-		next.setFirst(previous.getFirst());
-		next.setPrevious(previous);
-		
-				
-		//propagate division
-		if(previous.hasObservedDivision())
-			next.setDivision(previous.getDivision());
-
-		previous.setNext(next);
-		previous.setErrorTag(-1);
-
-		this.stGraph.setTracking(true);
+		if(previous == null){
+			next.setTrackID(-1);
+			next.setPrevious(null);
+			next.setFirst(null);
+		}
+		else{
+			//Attach new track
+			next.setTrackID(previous.getTrackID());
+			next.setFirst(previous.getFirst());
+			next.setPrevious(previous);
+			
+					
+			//propagate division
+			if(previous.hasObservedDivision())
+				next.setDivision(previous.getDivision());
+	
+			previous.setNext(next);
+			previous.setErrorTag(-1);
+	
+			//TODO make this action automatic as soon as stGraph.tracking_id > 0
+			this.stGraph.setTracking(true);
+		}
 	}
 	
 	private void propagateCurrentTrackedCell(){
@@ -167,6 +196,27 @@ public class ManualTrackingOverlay extends StGraphOverlay {
 
 	}
 	
+	private void eliminateCurrentTrackedCell(){
+		
+		Node current = currentlyTrackedCell;
+		current.setErrorTag(-7); //elimination (TODO create enum for this)
+
+		//detach all further path
+		while(current.hasNext()){
+			Node next = current.getNext();
+			current.setNext(null);
+			
+			//detach next position
+			next.setTrackID(-1);
+			next.setPrevious(null);
+			next.setFirst(null);
+			//TODO set free errorTag maybe
+			
+			current = next;
+		}
+
+	}
+	
 	@Override
 	public void paint(Graphics2D g, Sequence sequence, IcyCanvas canvas)
     {
@@ -175,15 +225,14 @@ public class ManualTrackingOverlay extends StGraphOverlay {
 		
 		int time_point = Icy.getMainInterface().getFirstViewer(sequence).getPositionT();
 
-		if(time_point >= 0 && time_point < stGraph.size()){
-			FrameGraph frame_i = stGraph.getFrame(time_point);
-			//paintTrackingIds(g, frame_i);
-		}
+//		if(time_point >= 0 && time_point < stGraph.size()){
+//			FrameGraph frame_i = stGraph.getFrame(time_point);
+//			paintTrackingIds(g, frame_i);
+//		}
 		
 		//Take previous time point
-		time_point--;
-		
-		if(time_point >= 0 && time_point < stGraph.size()){
+		if(time_point > 0 && time_point < stGraph.size()){
+			time_point--;
 			FrameGraph frame_i = stGraph.getFrame(time_point);
 			paintFrame(g, frame_i);
 		}
@@ -219,37 +268,45 @@ public class ManualTrackingOverlay extends StGraphOverlay {
 		
 		//TODO	compare frame_i time point with the one of currentlyTrackedCell
 		//	if the time point is immediately before, then assume that the 
-		//TODO	user wants to correct his assignment. For this create a field
-		//	that saves the link which (optional) assigned previously. By
-		//	clicking on any other cell the user switches the assignment
-		//	done. Make sure to save everythig which was overritten (e.g. error_Tag too)
-		//	Once reverted continue normally;
-		//TODO	Change the Message when the user is going back a frame
-		//TODO	Allow for skipping a frame (already possible?), maybe allert the user
-		//	or just advise him that he is skipping frames when navigating beyond t+1. Keep t overlay!
-		//TODO	Error tags could be based on instant lookup (e.g. is cell.next in the t+1 frame?)
+		//	user wants to correct his assignment. 
 		
-		if(frame_i.containsVertex(currentlyTrackedCell)){
-				
-			Color userColor = varPolygonColor.getValue().getColor();
-			int userR = userColor.getRed();
-			int userG = userColor.getGreen();
-			int userB = userColor.getBlue();
-			int alpha = 180;
-
-			//Show tracked cell completely filled
-			Color displayColor = new Color(userR,userG,userB,alpha);
-			g.setColor(displayColor);
-			g.fill(writer.toShape(currentlyTrackedCell.getGeometry()));
-			//long f3 = System.currentTimeMillis();
-			
-			//display them all to help identification (scheme 3)
-			for(Node cell: frame_i.vertexSet())
-				g.draw(writer.toShape(cell.getGeometry()));
-			
-			//f3 = System.currentTimeMillis() - f3;
-			//System.out.printf("%d: Visualized Tracking in %d ms\n",System.currentTimeMillis(),f3);
+		//TODO	For this create a field that saves the link which (optional) 
+		//	assigned previously. By clicking on any other cell the user switches 
+		//	the assignment done. Make sure to save everything which was overwritten 
+		//	(e.g. error_Tag too) Once reverted continue normally;
+		
+		//TODO	Change the Message when the user is going back a frame
+		
+		//TODO	Allow for skipping a frame (already possible?), maybe alert the user
+		//	or just advise him that he is skipping frames when navigating beyond t+1. Keep t overlay!
+		
+		//TODO	Error tags could be based on instant lookup (e.g. is cell.next in the t+1 frame?)
+		if(currentlyTrackedCell != null){
+			if(frame_i.containsVertex(currentlyTrackedCell)){
+				overlayTrackedCellFrame(g, currentlyTrackedCell);
+			}
 		}
+
+	}
+
+	private void overlayTrackedCellFrame(Graphics2D g, Node trackedCell) {
+		Color userColor = varPolygonColor.getValue().getColor();
+		int userR = userColor.getRed();
+		int userG = userColor.getGreen();
+		int userB = userColor.getBlue();
+		int alpha = 180;
+
+		//Show tracked cell completely filled
+		Color displayColor = new Color(userR,userG,userB,alpha);
+		g.setColor(displayColor);
+		g.fill(writer.toShape(trackedCell.getGeometry()));
+		//long f3 = System.currentTimeMillis();
+		
+		//display them all to help identification (scheme 3)
+		for(Node cell: trackedCell.getBelongingFrame().vertexSet())
+			g.draw(writer.toShape(cell.getGeometry()));
+		//f3 = System.currentTimeMillis() - f3;
+		//System.out.printf("%d: Visualized Tracking in %d ms\n",System.currentTimeMillis(),f3);
 
 	}
 
