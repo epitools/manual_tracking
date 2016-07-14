@@ -5,6 +5,7 @@ import icy.util.XLSUtil;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics2D;
+import java.awt.Shape;
 import java.awt.geom.Line2D.Double;
 import java.util.Collections;
 import java.util.HashMap;
@@ -54,11 +55,13 @@ public class TrackingOverlay extends StGraphOverlay{
 	 * A Random bright color for each cell
 	 */
 	private HashMap<Node,Color> correspondence_color;
+	private HashMap<Node,Shape> inner_circle;
+	private ShapeWriter writer;
 	
 	/**
 	 * A static color map for each error type
 	 */
-	private static final Map<Integer, Color> errorMap;
+	public static final Map<Integer, Color> errorMap;
 	static{
 		Map<Integer, Color> aMap = new HashMap<Integer, Color>();
 		aMap.put(-2, Color.red);		//cell missing in previous frame
@@ -93,6 +96,8 @@ public class TrackingOverlay extends StGraphOverlay{
 		this.correspondence_color = new HashMap<Node,Color>();
 		this.stGraph = stGraph;
 		this.highlightMistakes = highlightMistakes.booleanValue();
+		this.inner_circle = new HashMap<Node,Shape>();
+		this.writer = new ShapeWriter();
 		
 		//Assign color to cell line starting from first cell
 		Iterator<Node> cell_it = stGraph.getFrame(0).iterator();
@@ -100,6 +105,7 @@ public class TrackingOverlay extends StGraphOverlay{
 		
 		//Assign to every first cell a random color, also 
 		//attach the same color to ev. children
+		
 		while(cell_it.hasNext()){
 			
 			Node cell = cell_it.next();
@@ -112,7 +118,17 @@ public class TrackingOverlay extends StGraphOverlay{
 				correspondence_color.put(division.getChild1(),cell_color);
 				correspondence_color.put(division.getChild2(),cell_color);
 			}
-
+		}
+		
+		//Preload shapes
+		for(int i=0; i < stGraph.size(); i++){
+			for(Node cell: stGraph.getFrame(i).vertexSet()){
+				if(cell.getTrackID() != -1){
+					Geometry geo = cell.getGeometry();
+					Geometry inner_geo = geo.difference(geo.buffer(-3.0));
+					inner_circle.put(cell, writer.toShape(inner_geo));
+				}
+			}
 		}
 	}
 	
@@ -139,7 +155,6 @@ public class TrackingOverlay extends StGraphOverlay{
 	{
 
 		double percentage_tracked = 0;
-		ShapeWriter writer = new ShapeWriter();
 		for(Node cell: frame.vertexSet()){
 
 			if(cell.getTrackID() != -1){
@@ -149,11 +164,15 @@ public class TrackingOverlay extends StGraphOverlay{
 					g.setColor(correspondence_color.get(cell.getFirst()));
 
 					if(highlightMistakes){
-						
-						Geometry geo = cell.getGeometry();
-						Geometry inner = geo.difference(geo.buffer(-3.0));
-						
-						g.draw(writer.toShape(inner));
+						Shape inner = null;
+						if(inner_circle.containsKey(cell))
+							inner = inner_circle.get(cell);
+						else{
+							Geometry geo = cell.getGeometry();
+							Geometry inner_geo = geo.difference(geo.buffer(-3.0));
+							inner_circle.put(cell, writer.toShape(inner_geo));
+						}
+						g.fill(inner);
 					}
 					else
 						g.fill(cell.toShape());
