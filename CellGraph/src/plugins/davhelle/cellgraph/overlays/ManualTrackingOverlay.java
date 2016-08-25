@@ -31,6 +31,7 @@ import plugins.adufour.ezplug.EzVarEnum;
 import plugins.davhelle.cellgraph.graphs.FrameGraph;
 import plugins.davhelle.cellgraph.graphs.SpatioTemporalGraph;
 import plugins.davhelle.cellgraph.misc.CellColor;
+import plugins.davhelle.cellgraph.nodes.Division;
 import plugins.davhelle.cellgraph.nodes.Node;
 import plugins.kernel.canvas.VtkCanvas;
 
@@ -54,6 +55,8 @@ public class ManualTrackingOverlay extends StGraphOverlay {
 	EzVarEnum<CellColor> 		varPolygonColor;
 	
 	private Node detachedCell;
+	private int division_clicks;
+	private Node[] division_nodes;
 	
 
 	public ManualTrackingOverlay(SpatioTemporalGraph stGraph, EzVarEnum<CellColor> varPolygonColor) {
@@ -85,6 +88,10 @@ public class ManualTrackingOverlay extends StGraphOverlay {
 				eliminateCurrentTrackedCell();
 				resetTracking(canvas);
 			}
+			else if(e.getKeyCode() == KeyEvent.VK_D){
+				divisionTracking();
+				painterChanged();
+			}
 			else if(e.getKeyCode() == KeyEvent.VK_R){
 				//REDO
 				currentlyTrackedCell = currentlyTrackedCell.getPrevious();
@@ -93,6 +100,13 @@ public class ManualTrackingOverlay extends StGraphOverlay {
 				canvas.setPositionT(canvas.getPositionT() - 1);
 			}
 		}
+	}
+
+	private void divisionTracking() {
+		// now add two cells
+		currentLegend = "Division_mode: select the 1st daughter cell!";
+		division_nodes = new Node[2];
+		division_clicks = 2;
 	}
 
 	private void resetTracking(IcyCanvas canvas) {
@@ -122,31 +136,69 @@ public class ManualTrackingOverlay extends StGraphOverlay {
 			 		
 			 		//insert currently displayed one
 			 		//to establish connection 
-			 			
-			 		if(currentlyTrackedCell != null)
-			 			linkNodes(cell,currentlyTrackedCell);
-			 		else
-			 			cell.setTrackID(stGraph.getNewTrackingId());
 			 		
-			 		//update
-			 		currentlyTrackedCell = cell;
+			 		if(division_clicks > 0){
+			 			division_nodes[division_clicks-1] = cell;
+			 		}
+			 		else{	
+			 			if(currentlyTrackedCell != null)
+			 				linkNodes(cell,currentlyTrackedCell);
+			 			else
+			 				cell.setTrackID(stGraph.getNewTrackingId());
+			 			
+			 			//update
+			 			currentlyTrackedCell = cell;
+			 		}
 			 	}
 			}
 			
-			if(time_point + 1 < stGraph.size()){
-				canvas.setPositionT(time_point + 1);
-				currentLegend = "Now: click to link a cell or press "
-						+ "P[propagate];"
-						+ "E[eliminate];"
-						+ "R[redo last]";
+			if(division_clicks > 0){
+				division_clicks--;
+				if(division_clicks == 0){
+					
+					Node mother = currentlyTrackedCell;
+					
+					//get new tracking ids & propagate
+					for(int i=0; i< 2; i++){
+						division_nodes[i].setTrackID(stGraph.getNewTrackingId());
+						currentlyTrackedCell = division_nodes[i];
+						propagateCurrentTrackedCell();
+					}
+					
+					Division division = new Division(
+							mother, division_nodes[0],
+							division_nodes[1]);
+					
+					System.out.println(division.toString());
+					
+					currentLegend = "Division registered! To start next cell press [SPACE]";
+					insertionLock = true;
+				}
+				else
+					currentLegend = "Division_mode: select the 2nd daughter cell!";
 			}
-			
-			if(time_point == stGraph.size() - 1){
+			else if(time_point + 1 < stGraph.size()){
+				advanceToNextFrame(canvas, time_point);
+			}
+			else if(time_point == stGraph.size() - 1){
 				//1. give modification notice & Ask user to repeat.
 				currentLegend = "Tracking Completed! To start next cell press [SPACE]";
 				insertionLock = true;
 			}
 		}
+	}
+
+	/**
+	 * @param canvas
+	 * @param time_point
+	 */
+	private void advanceToNextFrame(IcyCanvas canvas, int time_point) {
+		canvas.setPositionT(time_point + 1);
+		currentLegend = "Now: click to link a cell or press "
+				+ "P[propagate];"
+				+ "E[eliminate];"
+				+ "R[redo last];"
+				+ "D[division]";
 	}
 	
 	private void linkNodes(Node next, Node previous){
