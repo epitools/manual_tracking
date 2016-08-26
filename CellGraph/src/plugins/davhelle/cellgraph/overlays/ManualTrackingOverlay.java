@@ -114,6 +114,7 @@ public class ManualTrackingOverlay extends StGraphOverlay {
 		canvas.setPositionT(0);
 
 		insertionLock = false;
+		division_clicks = -1;
 		currentLegend = "Reset! Click on a cell to start tracking the next cell";
 	}
 	
@@ -172,6 +173,7 @@ public class ManualTrackingOverlay extends StGraphOverlay {
 					System.out.println(division.toString());
 					
 					currentLegend = "Division registered! To start next cell press [SPACE]";
+					currentlyTrackedCell = null;
 					insertionLock = true;
 				}
 				else
@@ -282,6 +284,16 @@ public class ManualTrackingOverlay extends StGraphOverlay {
 //			paintTrackingIds(g, frame_i);
 //		}
 		
+		if(division_clicks == 1){
+			g.setColor(Color.BLUE);
+			g.fill(writer.toShape(division_nodes[1].getGeometry()));
+		}
+		
+		if(division_clicks == 0){
+			g.setColor(Color.BLUE);
+			connectNodes(g, division_nodes[0], division_nodes[1]);
+		}
+		
 		//Take previous time point
 		if(time_point > 0 && time_point < stGraph.size()){
 			time_point--;
@@ -375,6 +387,7 @@ public class ManualTrackingOverlay extends StGraphOverlay {
 		//draw line
 		g.draw(writer.toShape(edge_line));
 		g.draw(writer.toShape(a));
+		g.draw(writer.toShape(b));
 	}
 
 	@Override
