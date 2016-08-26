@@ -71,6 +71,8 @@ public class ManualTrackingOverlay extends StGraphOverlay {
 		this.currentLegend = "Click on a cell to start tracking it";
 		this.insertionLock = false;
 		this.setPriority(OverlayPriority.TOPMOST);
+		
+		division_clicks=-1;
 	}
 	
 	@Override
@@ -173,7 +175,7 @@ public class ManualTrackingOverlay extends StGraphOverlay {
 					System.out.println(division.toString());
 					
 					currentLegend = "Division registered! To start next cell press [SPACE]";
-					currentlyTrackedCell = null;
+					currentlyTrackedCell = mother;
 					insertionLock = true;
 				}
 				else
@@ -396,7 +398,12 @@ public class ManualTrackingOverlay extends StGraphOverlay {
 		Color c = Color.WHITE;
 		int offset = 0;
 
-		OverlayUtils.stringColorLegend(g, line, s, c, offset);
+		if(s.contains(";")){
+			for(String sub: s.split(";"))
+				OverlayUtils.stringColorLegend(g, line, sub, c, 20*offset++);
+		}
+		else
+			OverlayUtils.stringColorLegend(g, line, s, c, offset);
 	}
 
 	@Override
