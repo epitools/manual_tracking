@@ -108,6 +108,8 @@ public class Cell implements Node {
 	 */
 	private Color color_tag;
 
+	private Color trackingColor;
+
 	/**
 	 * Initializes the Node type representing a Cell as Polygon 
 	 * 
@@ -141,6 +143,7 @@ public class Cell implements Node {
 		
 		//color_tag, default black
 		this.color_tag = null;
+		this.trackingColor = null;
 	}
 
 	@Override
@@ -336,6 +339,22 @@ public class Cell implements Node {
 			this.has_observed_origin = true;
 		else
 			this.has_observed_origin = false;
+	}
+
+	@Override
+	public Color getTrackingColor() {
+		return trackingColor;
+	}
+
+	@Override
+	public void setTrackingColor(Color trackingColor) {
+		this.trackingColor = trackingColor;
+		
+	}
+
+	@Override
+	public boolean hasTrackingColor() {
+	return trackingColor != null;
 	}
 
 }

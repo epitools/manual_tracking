@@ -171,4 +171,17 @@ public class DummyNode implements Node {
 	@Override
 	public void setOrigin(Division origin) {}
 
+	@Override
+	public Color getTrackingColor() {
+		return null;
+	}
+
+	@Override
+	public void setTrackingColor(Color trackingColor) {}
+
+	@Override
+	public boolean hasTrackingColor() {
+		return false;
+	}
+
 }

@@ -253,6 +253,31 @@ public interface Node{
 	 * @param color_tag the color tag to set
 	 */
 	public void setColorTag(Color color_tag);
+	
+	/**
+	 * Get associate tracking color of the node,
+	 * i.e. color characterizing it's lineage
+	 * 
+	 * @return the tracking color
+	 */
+	public Color getTrackingColor();
+	
+	
+	/**
+	 * Set the tracking color characterizing the
+	 * lineage of the node
+	 * 
+	 * @param trackingColor the tracking color
+	 */
+	public void setTrackingColor(Color trackingColor);
+	
+	
+	/**
+	 * Verify if the node has an associated tracking color
+	 * 
+	 * @return true if the node has a tracking color
+	 */
+	public boolean hasTrackingColor();
 
 	/**
 	 * Returns the time point of the frame if there is one associated
