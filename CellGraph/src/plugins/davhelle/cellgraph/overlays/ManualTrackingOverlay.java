@@ -269,8 +269,24 @@ public class ManualTrackingOverlay extends StGraphOverlay {
 			
 					
 			//propagate division
-			if(previous.hasObservedDivision())
-				next.setDivision(previous.getDivision());
+			if(previous.hasObservedDivision()){
+				if(!previous.hasNext()){
+					//this was a cell dividing in the next frame
+					//we are basically canceling the division event
+					
+					//1. reset division
+					//2. cancel division form frame
+					//3. propagate cancellation of division
+					
+				} else {
+					// TODO this should be rewritten
+					// nobody guaratees that the tracks are still the
+					// same, most likely this previous should actually 
+					// be stripped from having the division
+					// but also the reverse should be guaranteed.
+					next.setDivision(previous.getDivision());
+				}
+			}
 			
 			if(previous.hasNext()){
 				Node oldNext = previous.getNext();
