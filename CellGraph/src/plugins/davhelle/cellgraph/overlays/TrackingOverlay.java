@@ -116,16 +116,22 @@ public class TrackingOverlay extends StGraphOverlay{
 		
 		checkDivisions();
 		
-		//Preload shapes
-		for(int i=0; i < stGraph.size(); i++){
-			for(Node cell: stGraph.getFrame(i).vertexSet()){
-				if(cell.getTrackID() != -1){
-					Geometry geo = cell.getGeometry();
-					Geometry inner_geo = geo.difference(geo.buffer(-3.0));
-					inner_circle.put(cell, writer.toShape(inner_geo));
-				}
-			}
-		}
+		//Precompute shapes
+		for(int i=0; i < stGraph.size(); i++)
+			for(Node cell: stGraph.getFrame(i).vertexSet())
+				if(cell.getTrackID() != -1)
+					computeInnerCircle(cell);
+		
+	}
+
+	/**
+	 * @param cell
+	 */
+	private void computeInnerCircle(Node cell) {
+		Geometry geo = cell.getGeometry();
+		Geometry inner_geo = geo.difference(geo.buffer(-3.0));
+		inner_circle.put(cell, writer.toShape(inner_geo));
+		//TODO return geometry
 	}
 	
 	/**
@@ -191,16 +197,11 @@ public class TrackingOverlay extends StGraphOverlay{
 					g.setColor(cell.getTrackingColor());
 
 					if(highlightMistakes){
-						Shape inner = null;
-						if(inner_circle.containsKey(cell)){
-							inner = inner_circle.get(cell);
-							g.fill(inner);
-						}
-						else{
-							Geometry geo = cell.getGeometry();
-							g.draw(writer.toShape(geo));
-						}
-						
+						if(!inner_circle.containsKey(cell))
+							computeInnerCircle(cell);
+
+						Shape inner = inner_circle.get(cell);
+						g.fill(inner);
 					}
 					else
 						g.fill(cell.toShape());
