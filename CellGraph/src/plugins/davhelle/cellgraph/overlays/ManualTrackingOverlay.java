@@ -57,6 +57,7 @@ public class ManualTrackingOverlay extends StGraphOverlay {
 	private Node detachedCell;
 	private int division_clicks;
 	private Node[] division_nodes;
+	private boolean repair_mode;
 	
 
 	public ManualTrackingOverlay(SpatioTemporalGraph stGraph, EzVarEnum<CellColor> varPolygonColor) {
@@ -92,6 +93,13 @@ public class ManualTrackingOverlay extends StGraphOverlay {
 			}
 			else if(e.getKeyCode() == KeyEvent.VK_D){
 				divisionTracking();
+				painterChanged();
+			}
+			else if(e.getKeyCode() == KeyEvent.VK_F){
+				insertionLock = false;
+				repair_mode = true;
+				//TODO expand this as a possibility
+				currentLegend = "Fix mode: select daughter cell to repair!";
 				painterChanged();
 			}
 			else if(e.getKeyCode() == KeyEvent.VK_R){
@@ -137,13 +145,17 @@ public class ManualTrackingOverlay extends StGraphOverlay {
 			for(Node cell: frame_i.vertexSet()){
 			 	if(cell.getGeometry().contains(point_geometry)){
 			 		
-			 		//insert currently displayed one
-			 		//to establish connection 
-			 		
 			 		if(division_clicks > 0){
 			 			division_nodes[division_clicks-1] = cell;
 			 		}
-			 		else{	
+			 		else if(repair_mode){
+			 			currentlyTrackedCell = cell;
+			 			repair_mode = false;
+			 		}
+			 		else{
+				 		//insert currently displayed one
+				 		//to establish connection 
+			 			
 			 			if(currentlyTrackedCell != null)
 			 				linkNodes(cell,currentlyTrackedCell);
 			 			else
@@ -157,27 +169,8 @@ public class ManualTrackingOverlay extends StGraphOverlay {
 			
 			if(division_clicks > 0){
 				division_clicks--;
-				if(division_clicks == 0){
-					
-					Node mother = currentlyTrackedCell;
-					
-					//get new tracking ids & propagate
-					for(int i=0; i< 2; i++){
-						division_nodes[i].setTrackID(stGraph.getNewTrackingId());
-						currentlyTrackedCell = division_nodes[i];
-						propagateCurrentTrackedCell();
-					}
-					
-					Division division = new Division(
-							mother, division_nodes[0],
-							division_nodes[1]);
-					
-					System.out.println(division.toString());
-					
-					currentLegend = "Division registered! To start next cell press [SPACE]";
-					currentlyTrackedCell = mother;
-					insertionLock = true;
-				}
+				if(division_clicks == 0)
+					finalizeDivision();
 				else
 					currentLegend = "Division_mode: select the 2nd daughter cell!";
 			}
@@ -190,6 +183,33 @@ public class ManualTrackingOverlay extends StGraphOverlay {
 				insertionLock = true;
 			}
 		}
+	}
+
+	/**
+	 * 
+	 */
+	private void finalizeDivision() {
+		Node mother = currentlyTrackedCell;
+		
+		//get new tracking ids & propagate
+		for(int i=0; i< 2; i++){
+			division_nodes[i].setTrackID(stGraph.getNewTrackingId());
+			division_nodes[i].setTrackingColor(mother.getTrackingColor());
+			currentlyTrackedCell = division_nodes[i];
+			propagateCurrentTrackedCell();
+		}
+		
+		Division division = new Division(
+				mother, division_nodes[0],
+				division_nodes[1]);
+		
+		System.out.println(division.toString());
+		
+		currentLegend = "Division registered! The daughter cells have been propagated; " +
+				"to fix the track of a daughter press [F] or; " +
+				"to restart with another cell [SPACE]";
+		currentlyTrackedCell = mother;
+		insertionLock = true;
 	}
 
 	/**
@@ -248,6 +268,7 @@ public class ManualTrackingOverlay extends StGraphOverlay {
 			future = future.getNext();
 			future.setTrackID(currentlyTrackedCell.getTrackID());
 			future.setFirst(currentlyTrackedCell.getFirst());
+			future.setTrackingColor(currentlyTrackedCell.getTrackingColor());
 		}
 
 	}
