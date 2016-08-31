@@ -247,6 +247,7 @@ public class ManualTrackingOverlay extends StGraphOverlay {
 		if(next.hasPrevious()){
 			Node oldPrevious = next.getPrevious();
 			oldPrevious.setNext(null);
+			oldPrevious.setErrorTag(-3);
 			detachedCell = oldPrevious;
 		}
 		else{
@@ -257,10 +258,12 @@ public class ManualTrackingOverlay extends StGraphOverlay {
 			next.setTrackID(-1);
 			next.setPrevious(null);
 			next.setFirst(null);
+			next.setTrackingColor(null);
 		}
 		else{
 			//Attach new track
 			next.setTrackID(previous.getTrackID());
+			next.setTrackingColor(previous.getTrackingColor());
 			next.setFirst(previous.getFirst());
 			next.setPrevious(previous);
 			
@@ -268,7 +271,17 @@ public class ManualTrackingOverlay extends StGraphOverlay {
 			//propagate division
 			if(previous.hasObservedDivision())
 				next.setDivision(previous.getDivision());
-	
+			
+			if(previous.hasNext()){
+				Node oldNext = previous.getNext();
+				oldNext.setPrevious(null);
+				oldNext.setErrorTag(-2); //TODO automate this by scanning or listening
+				oldNext.setTrackingColor(null);
+				while(oldNext.hasNext()){
+					oldNext = oldNext.getNext();
+					oldNext.setTrackingColor(null); //TODO this should be handled in a separate method
+				}
+			}
 			previous.setNext(next);
 			previous.setErrorTag(-1);
 	
