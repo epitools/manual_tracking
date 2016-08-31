@@ -23,6 +23,7 @@ import com.vividsolutions.jts.geom.LineString;
 import com.vividsolutions.jts.geom.Point;
 
 import icy.canvas.IcyCanvas;
+import icy.gui.frame.progress.AnnounceFrame;
 import icy.main.Icy;
 import icy.sequence.Sequence;
 import icy.type.point.Point5D;
@@ -30,6 +31,7 @@ import jxl.write.WritableSheet;
 import plugins.adufour.ezplug.EzVarEnum;
 import plugins.davhelle.cellgraph.graphs.FrameGraph;
 import plugins.davhelle.cellgraph.graphs.SpatioTemporalGraph;
+import plugins.davhelle.cellgraph.io.CsvTrackWriter;
 import plugins.davhelle.cellgraph.misc.CellColor;
 import plugins.davhelle.cellgraph.nodes.Division;
 import plugins.davhelle.cellgraph.nodes.Node;
@@ -58,9 +60,12 @@ public class ManualTrackingOverlay extends StGraphOverlay {
 	private int division_clicks;
 	private Node[] division_nodes;
 	private boolean repair_mode;
+	private String autoSaveDir;
 	
 
-	public ManualTrackingOverlay(SpatioTemporalGraph stGraph, EzVarEnum<CellColor> varPolygonColor) {
+	public ManualTrackingOverlay(SpatioTemporalGraph stGraph, 
+			EzVarEnum<CellColor> varPolygonColor,
+			String autoSaveDir) {
 		super("Manual Tracking", stGraph);
 		
 		this.factory = new GeometryFactory();
@@ -73,6 +78,9 @@ public class ManualTrackingOverlay extends StGraphOverlay {
 		this.insertionLock = false;
 		this.setPriority(OverlayPriority.TOPMOST);
 		
+		this.autoSaveDir = "None";
+		if(autoSaveDir != this.autoSaveDir)
+			this.autoSaveDir = autoSaveDir;
 		division_clicks=-1;
 	}
 	
@@ -125,6 +133,13 @@ public class ManualTrackingOverlay extends StGraphOverlay {
 
 		insertionLock = false;
 		division_clicks = -1;
+		
+		//automatic saving
+		CsvTrackWriter track_writer = new CsvTrackWriter(
+				stGraph,autoSaveDir);
+		track_writer.write();
+		new AnnounceFrame("Automatical saved track: "+autoSaveDir, 5);
+		
 		currentLegend = "Reset! Click on a cell to start tracking the next cell";
 	}
 	
@@ -195,6 +210,7 @@ public class ManualTrackingOverlay extends StGraphOverlay {
 		for(int i=0; i< 2; i++){
 			division_nodes[i].setTrackID(stGraph.getNewTrackingId());
 			division_nodes[i].setTrackingColor(mother.getTrackingColor());
+			division_nodes[i].setFirst(division_nodes[i]);
 			currentlyTrackedCell = division_nodes[i];
 			propagateCurrentTrackedCell();
 		}

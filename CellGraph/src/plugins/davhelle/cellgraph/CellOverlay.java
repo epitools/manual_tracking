@@ -23,6 +23,7 @@ import plugins.adufour.ezplug.EzVarSequence;
 import plugins.davhelle.cellgraph.export.ExportFieldType;
 import plugins.davhelle.cellgraph.graphs.SpatioTemporalGraph;
 import plugins.davhelle.cellgraph.io.IntensitySummaryType;
+import plugins.davhelle.cellgraph.io.SaveFolderDialog;
 import plugins.davhelle.cellgraph.misc.CellColor;
 import plugins.davhelle.cellgraph.misc.VoronoiGenerator;
 import plugins.davhelle.cellgraph.overlays.AlwaysTrackedCellsOverlay;
@@ -452,7 +453,14 @@ public class CellOverlay extends EzPlug implements EzVarListener<OverlayEnum>{
 			OverlayEnum USER_CHOICE, Sequence sequence) {
 		switch (USER_CHOICE){
 		case TEST:
-			sequence.addOverlay(new ManualTrackingOverlay(stGraph,varTrackingColor));
+			String autoSaveDir = SaveFolderDialog.chooseFolder("Manual tracking: Please choose folder for automatic saving");
+			if(autoSaveDir == null)
+				return;
+			sequence.addOverlay(
+					new ManualTrackingOverlay(
+							stGraph,
+							varTrackingColor,
+							autoSaveDir));
 			break;
 		case CELL_PROJECTION:
 			if(varSurfaceFile.getValue(false) == null){
