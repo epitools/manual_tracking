@@ -54,7 +54,6 @@ public class TrackingOverlay extends StGraphOverlay{
 	/**
 	 * A Random bright color for each cell
 	 */
-	private HashMap<Node,Color> correspondence_color;
 	private HashMap<Node,Shape> inner_circle;
 	private ShapeWriter writer;
 	
@@ -93,7 +92,6 @@ public class TrackingOverlay extends StGraphOverlay{
 		super("Cell Tracking Color",stGraph);
 		
 		//Color for each cell line
-		this.correspondence_color = new HashMap<Node,Color>();
 		this.stGraph = stGraph;
 		this.highlightMistakes = highlightMistakes.booleanValue();
 		this.inner_circle = new HashMap<Node,Shape>();
@@ -107,18 +105,16 @@ public class TrackingOverlay extends StGraphOverlay{
 		//attach the same color to ev. children
 		
 		while(cell_it.hasNext()){
-			
 			Node cell = cell_it.next();
 			Color cell_color = newColor(rand);
-			correspondence_color.put(cell, cell_color);
-			
-			if(cell.hasObservedDivision()){
-				Division division = cell.getDivision();
-				//same color for children or cell_color = newColor(rand);
-				correspondence_color.put(division.getChild1(),cell_color);
-				correspondence_color.put(division.getChild2(),cell_color);
+			cell.setTrackingColor(cell_color);
+			while(cell.hasNext()){
+				cell = cell.getNext();
+				cell.setTrackingColor(cell_color);
 			}
 		}
+		
+		checkDivisions();
 		
 		//Preload shapes
 		for(int i=0; i < stGraph.size(); i++){
@@ -150,6 +146,37 @@ public class TrackingOverlay extends StGraphOverlay{
 		return cell_color;
 	}
 	
+	public void checkDivisions(){
+		Iterator<Node> cell_it = stGraph.getFrame(0).iterator();
+		
+		while(cell_it.hasNext()){
+			
+			Node cell = cell_it.next();
+			Color cell_color = cell.getTrackingColor();
+			
+			if(cell.hasObservedDivision()){
+				Division division = cell.getDivision();
+				//same color for children or cell_color = newColor(rand);
+				Node child1 = division.getChild1();
+				Node child2 = division.getChild2();
+				
+				child1.setTrackingColor(cell_color);
+				child2.setTrackingColor(cell_color);
+				
+				while(child1.hasNext()){
+					child1 = child1.getNext();
+					child1.setTrackingColor(cell_color);
+				}
+				
+				while(child2.hasNext()){
+					child2 = child2.getNext();
+					child2.setTrackingColor(cell_color);
+				}
+				
+			}
+		}
+	}
+	
 	@Override
 	public void paintFrame(Graphics2D g, FrameGraph frame)
 	{
@@ -158,21 +185,22 @@ public class TrackingOverlay extends StGraphOverlay{
 		for(Node cell: frame.vertexSet()){
 
 			if(cell.getTrackID() != -1){
-				if(correspondence_color.containsKey(cell.getFirst())){
+				if(cell.hasTrackingColor()){
 					percentage_tracked++;
 					//cell is part of registered correspondence
-					g.setColor(correspondence_color.get(cell.getFirst()));
+					g.setColor(cell.getTrackingColor());
 
 					if(highlightMistakes){
 						Shape inner = null;
-						if(inner_circle.containsKey(cell))
+						if(inner_circle.containsKey(cell)){
 							inner = inner_circle.get(cell);
+							g.fill(inner);
+						}
 						else{
 							Geometry geo = cell.getGeometry();
-							Geometry inner_geo = geo.difference(geo.buffer(-3.0));
-							inner_circle.put(cell, writer.toShape(inner_geo));
+							g.draw(writer.toShape(geo));
 						}
-						g.fill(inner);
+						
 					}
 					else
 						g.fill(cell.toShape());
