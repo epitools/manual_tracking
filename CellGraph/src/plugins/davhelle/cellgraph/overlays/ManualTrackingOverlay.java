@@ -34,6 +34,7 @@ import plugins.davhelle.cellgraph.graphs.SpatioTemporalGraph;
 import plugins.davhelle.cellgraph.io.CsvTrackWriter;
 import plugins.davhelle.cellgraph.misc.CellColor;
 import plugins.davhelle.cellgraph.nodes.Division;
+import plugins.davhelle.cellgraph.nodes.Elimination;
 import plugins.davhelle.cellgraph.nodes.Node;
 import plugins.kernel.canvas.VtkCanvas;
 
@@ -261,34 +262,10 @@ public class ManualTrackingOverlay extends StGraphOverlay {
 			next.setTrackingColor(null);
 		}
 		else{
-			//Attach new track
-			next.setTrackID(previous.getTrackID());
-			next.setTrackingColor(previous.getTrackingColor());
-			next.setFirst(previous.getFirst());
-			next.setPrevious(previous);
-			
-					
-			//propagate division
-			if(previous.hasObservedDivision()){
-				if(!previous.hasNext()){
-					//this was a cell dividing in the next frame
-					//we are basically canceling the division event
-					
-					//1. reset division
-					//2. cancel division form frame
-					//3. propagate cancellation of division
-					
-				} else {
-					// TODO this should be rewritten
-					// nobody guaratees that the tracks are still the
-					// same, most likely this previous should actually 
-					// be stripped from having the division
-					// but also the reverse should be guaranteed.
-					next.setDivision(previous.getDivision());
-				}
-			}
-			
+
 			if(previous.hasNext()){
+				
+				//Cancel previous connection
 				Node oldNext = previous.getNext();
 				oldNext.setPrevious(null);
 				oldNext.setErrorTag(-2); //TODO automate this by scanning or listening
@@ -297,10 +274,43 @@ public class ManualTrackingOverlay extends StGraphOverlay {
 					oldNext = oldNext.getNext();
 					oldNext.setTrackingColor(null); //TODO this should be handled in a separate method
 				}
+				
+				//Cancel any future division reference
+				previous.setDivision(null);
+				previous.setElimination(null);
+				
+			} else if(previous.hasObservedDivision()){
+				
+				//this was a mother cell dividing in the current frame
+				//need to cancel the division event
+				Division division = previous.getDivision();
+				division.destroy();
+				
+			} else if(previous.hasObservedElimination()){
+				
+				//remove elimination
+				Elimination elimination = previous.getElimination();
+				elimination.destroy();
+				
 			}
 			previous.setNext(next);
 			previous.setErrorTag(-1);
 	
+			//Attach new track
+			next.setTrackID(previous.getTrackID());
+			next.setTrackingColor(previous.getTrackingColor());
+			next.setFirst(previous.getFirst());
+			next.setPrevious(previous);
+			
+			if(next.getErrorTag() == -2)
+				next.setErrorTag(-1);
+			
+			//if next has a future division event this is
+			//not necessarily wrong as long as the user
+			//propagates the track
+			if(next.hasObservedDivision())
+				previous.setDivision(next.getDivision());
+			
 			//TODO make this action automatic as soon as stGraph.tracking_id > 0
 			this.stGraph.setTracking(true);
 		}

@@ -232,12 +232,12 @@ public class TrackingOverlay extends StGraphOverlay{
 
 						g.setColor(errorMap.get(cell.getErrorTag()));
 
-						if(highlightMistakes)
-							g.fill(cell.toShape());
-						else
-							g.draw(cell.toShape());
+//						if(highlightMistakes)
+//							g.fill(cell.toShape());
+//						else
+//							g.draw(cell.toShape());
 
-						g.drawOval((int)lost.getX(),(int)lost.getY(), 5, 5);
+						g.fillOval((int)lost.getX() - 3,(int)lost.getY() - 10, 10, 10);
 					}
 				}
 			}

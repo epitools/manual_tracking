@@ -285,4 +285,15 @@ public class FrameGraph extends ListenableUndirectedWeightedGraph<Node, Edge> {
 	public boolean hasBoundary(){
 		return boundary != null;
 	}
+
+	public void removeDivision(Division division) {
+		//TODO try & catch
+		assert(divisions.contains(division));
+		divisions.remove(division);
+	}
+
+	public void removeElimination(Elimination elimination) {
+		assert(eliminations.contains(elimination));
+		eliminations.remove(elimination);
+	}
 }

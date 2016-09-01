@@ -1,8 +1,9 @@
 package plugins.davhelle.cellgraph.nodes;
 
-import com.vividsolutions.jts.geom.Geometry;
-
 import plugins.davhelle.cellgraph.graphs.FrameGraph;
+import plugins.davhelle.cellgraph.tracking.TrackingFeedback;
+
+import com.vividsolutions.jts.geom.Geometry;
 
 /**
  * The division object describes the event
@@ -177,6 +178,41 @@ public class Division {
 		longestMotherAxisOrientation = 0.0;
 		newJunctionOrientation = 0.0;
 		planeGeometry = null;
+		
+	}
+	
+	/**
+	 * Method to remove a wrongly assigned division event
+	 */
+	public void destroy(){
+		
+		division_frame.removeDivision(this);
+		
+		this.mother.setDivision(null);
+		this.child1.setDivision(null);
+		this.child2.setDivision(null);
+		
+		Node ancestor = mother.getPrevious();
+		while(ancestor != null){
+			ancestor.setDivision(null);
+			ancestor = ancestor.getPrevious();
+		}
+			
+		Node future1 = child1.getNext();
+		while(future1 != null){
+			future1.setDivision(null);
+			future1 = future1.getNext();
+		}
+
+		Node future2 = child2.getNext();
+		while(future2 != null){
+			future2.setDivision(null);
+			future2 = future2.getNext();
+		}
+		
+		this.child1.setErrorTag(TrackingFeedback.LOST_IN_PREVIOUS_FRAME.numeric_code);
+		this.child2.setErrorTag(TrackingFeedback.LOST_IN_PREVIOUS_FRAME.numeric_code);
+		this.mother.setErrorTag(TrackingFeedback.LOST_IN_NEXT_FRAME.numeric_code);
 		
 	}
 

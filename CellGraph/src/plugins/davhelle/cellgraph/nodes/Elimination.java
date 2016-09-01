@@ -67,4 +67,24 @@ public class Elimination {
 				"," +
 				Math.round(cell.getCentroid().getY()) + "]";
 	}
+
+	/**
+	 * Remove reference of elimination
+	 */
+	public void destroy() {
+		
+		FrameGraph last_frame = cell.getBelongingFrame();
+		
+		last_frame.removeElimination(this);	
+		cell.setElimination(this);
+		cell.setErrorTag(TrackingFeedback.DEFAULT.numeric_code);
+		
+		//remove elimination from all previous instances
+		Node ancestor = cell.getPrevious();
+		while(ancestor != null){
+			ancestor.setElimination(this);
+			ancestor = ancestor.getPrevious();
+		}
+	
+	}
 }
