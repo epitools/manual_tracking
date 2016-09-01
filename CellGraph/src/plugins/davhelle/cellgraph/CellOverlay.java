@@ -469,7 +469,7 @@ public class CellOverlay extends EzPlug implements EzVarListener<OverlayEnum>{
 			OverlayEnum USER_CHOICE, Sequence sequence) {
 		switch (USER_CHOICE){
 		case TEST:
-			String autoSaveDir = SaveFolderDialog.chooseFolder("Manual tracking: Please choose folder for automatic saving");
+			String autoSaveDir = SaveFolderDialog.chooseFolder("manual tracking");
 			if(autoSaveDir == null)
 				return;
 			sequence.addOverlay(
