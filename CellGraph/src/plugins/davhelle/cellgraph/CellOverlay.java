@@ -179,6 +179,23 @@ public class CellOverlay extends EzPlug implements EzVarListener<OverlayEnum>{
 		EzGroup groupOverlays = initializeOverlayParameters();
 		super.addEzComponent(groupOverlays);
 		
+		//Description label
+		varPlotting.addVarChangeListener(this);
+		varDescriptionLabel = new EzLabel(varPlotting.getValue().getDescription()+"<br/><br/>");
+		EzVarBoolean varShowDescription = new EzVarBoolean("Show overlay description",true);
+		EzLabel descriptionHeader = new EzLabel("Description:"); //<font color=\"#4d4d4d\"></font>
+		
+		super.addEzComponent(descriptionHeader);
+		super.addEzComponent(varDescriptionLabel);
+		super.addEzComponent(varShowDescription);
+		
+		varShowDescription.addVisibilityTriggerTo(descriptionHeader, varShowDescription.getValue());
+		varShowDescription.addVisibilityTriggerTo(varDescriptionLabel, varShowDescription.getValue());
+		
+//		EzGroup groupDescription = new EzGroup("1b. OVERLAY DESCRIPTION",
+//				varShowDescription);
+//		super.addEzComponent(groupDescription);
+		
 		//Initialize visualization Parameters
 		varSequence = new EzVarSequence("Image to add overlay to");
 		varSequence.setToolTipText("Any image with same dimensions on which to add the overlay");
@@ -327,7 +344,9 @@ public class CellOverlay extends EzPlug implements EzVarListener<OverlayEnum>{
 		
 		//Division orientation variable
 		varDoDetectionDistance = new EzVarInteger("Detection start",11,1,100,1);
+		varDoDetectionDistance.setToolTipText("# of frames before the division to measure longest axis be taken");
 		varDoDetectionLength = new EzVarInteger("Detection length",5,1,100,1);
+		varDoDetectionLength.setToolTipText("# of frames to average to measure the angle between longest axis and the new junction");
 		EzGroup groupDivisionOrientation = new EzGroup("Overlay elements",
 				varDoDetectionDistance,	
 				varDoDetectionLength);
@@ -346,11 +365,7 @@ public class CellOverlay extends EzPlug implements EzVarListener<OverlayEnum>{
 		EzGroup groupManualTracking = new EzGroup("Overlay elements",
 				varTrackingColor);
 		
-		//Description label
-		varPlotting.addVarChangeListener(this);
-		varDescriptionLabel = new EzLabel(varPlotting.getValue().getDescription());
-		EzGroup groupDescription = new EzGroup("Overlay summary",
-				varDescriptionLabel);
+
 		
 		//Describe the visibility of each overlay parameters
 		varPlotting.addVisibilityTriggerTo(groupCellMap, OverlayEnum.CELL_OUTLINE);
@@ -368,9 +383,10 @@ public class CellOverlay extends EzPlug implements EzVarListener<OverlayEnum>{
 		varPlotting.addVisibilityTriggerTo(groupCellProjection, OverlayEnum.CELL_PROJECTION);
 		varPlotting.addVisibilityTriggerTo(groupManualTracking, OverlayEnum.TEST);
 		
+		
+		
 		return new EzGroup("1. SELECT OVERLAY TO ADD",
 				varPlotting,
-				groupDescription,
 				groupCellMap,
 				groupPolygonClass,
 				groupVoronoiMap,
@@ -716,6 +732,7 @@ public class CellOverlay extends EzPlug implements EzVarListener<OverlayEnum>{
 	@Override
 	public void variableChanged(EzVar<OverlayEnum> source, OverlayEnum newValue) {
 		varDescriptionLabel.setText(newValue.getDescription());		
+		//getUI().repack(true);
 	}
 	
 	@Override
