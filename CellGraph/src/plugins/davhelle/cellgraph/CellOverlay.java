@@ -141,6 +141,7 @@ public class CellOverlay extends EzPlug implements EzVarListener<OverlayEnum>{
 	//T1 Transition
 	public EzVarInteger 		varMinimalTransitionLength;
 	public EzVarInteger 		varMinimalOldSurvival;
+	public EzVarInteger			varT1StartingFrame;
 
 	//Edge intensity
 	EzVarInteger 				varEnvelopeBuffer2;
@@ -313,9 +314,11 @@ public class CellOverlay extends EzPlug implements EzVarListener<OverlayEnum>{
 		//Save transitions
 		varMinimalTransitionLength = new EzVarInteger("Minimal transition length [frames]",5,1,100,1);
 		varMinimalOldSurvival = new EzVarInteger("Minimal old edge persistence [frames]",5,1,100,1);
+		varT1StartingFrame = new EzVarInteger("Starting frame for T1 detection",0,0,100,1);
 		EzGroup groupTransitions = new EzGroup("Overlay elements",
 				varMinimalTransitionLength,
-				varMinimalOldSurvival);
+				varMinimalOldSurvival,
+				varT1StartingFrame);
 		
 		//Edge Intensity
 		varEnvelopeBuffer2 = new EzVarInteger("Intensity Buffer [px]", 3, 1, 10, 1);

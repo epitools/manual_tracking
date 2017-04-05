@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 import plugins.adufour.ezplug.EzPlug;
+import plugins.davhelle.cellgraph.CellOverlay;
 import plugins.davhelle.cellgraph.graphs.FrameGraph;
 import plugins.davhelle.cellgraph.graphs.SpatioTemporalGraph;
 import plugins.davhelle.cellgraph.nodes.Edge;
@@ -37,7 +38,7 @@ public class EdgeTracking {
 			SpatioTemporalGraph stGraph) {
 		HashMap<Long, boolean[]> tracked_edges = new HashMap<Long,boolean[]>();
 		
-		initializeTrackedEdges(stGraph, tracked_edges);
+		initializeTrackedEdges(stGraph, tracked_edges,0);
 		for(int i=1; i<stGraph.size(); i++)
 			analyzeFrame(stGraph, tracked_edges, i);
 		
@@ -54,13 +55,16 @@ public class EdgeTracking {
 	 * the cantor paring of the edges vertex ids.
 	 */
 	public static HashMap<Long, boolean[]> trackEdges(
-			SpatioTemporalGraph stGraph, EzPlug plugin) {
+			SpatioTemporalGraph stGraph, CellOverlay plugin) {
 		HashMap<Long, boolean[]> tracked_edges = new HashMap<Long,boolean[]>();
+		
+		int starting_frame_no = plugin.varT1StartingFrame.getValue();
+		
 		plugin.getUI().setProgressBarMessage("Tracking Edges..");
 		plugin.getUI().setProgressBarValue(0.0);
 		
-		initializeTrackedEdges(stGraph, tracked_edges);
-		for(int i=1; i<stGraph.size(); i++){
+		initializeTrackedEdges(stGraph, tracked_edges,starting_frame_no);
+		for(int i=starting_frame_no+1; i<stGraph.size(); i++){
 			analyzeFrame(stGraph, tracked_edges, i);
 			plugin.getUI().setProgressBarValue((double)i/stGraph.size());
 		}
@@ -73,9 +77,11 @@ public class EdgeTracking {
 	 * @param stGraph graph to analyze
 	 * @param tracked_edges empty map
 	 */
-	private static void initializeTrackedEdges(SpatioTemporalGraph stGraph,
-			HashMap<Long, boolean[]> tracked_edges) {
-		FrameGraph first_frame = stGraph.getFrame(0);
+	private static void initializeTrackedEdges(
+			SpatioTemporalGraph stGraph,
+			HashMap<Long, boolean[]> tracked_edges,
+			int starting_frame_no) {
+		FrameGraph first_frame = stGraph.getFrame(starting_frame_no);
 		for(Edge e: first_frame.edgeSet())
 			if(e.canBeTracked(first_frame)){
 				long track_code = e.getPairCode(first_frame);
@@ -134,8 +140,8 @@ public class EdgeTracking {
 		//introduce the difference between lost edge because of tracking and because of T1
 		ArrayList<Long> to_eliminate = new ArrayList<Long>();
 		for(long track_code:tracked_edges.keySet())
-			for(int track_id: Edge.getCodePair(track_code))
-				if(!frame_i.hasTrackID(track_id)){
+			for(int track_id: Edge.getCodePair(track_code)) //Edge tuple (v1,v2)
+				if(!frame_i.hasTrackID(track_id)){ // vertex is missing
 					to_eliminate.add(track_code);
 					break;
 				}

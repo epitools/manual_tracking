@@ -44,7 +44,7 @@ public class TrackIdOverlay extends StGraphOverlay{
 			
     	int fontSize = 3;
     	g.setFont(new Font("TimesRoman", Font.PLAIN, fontSize));
-    	g.setColor(Color.CYAN);
+    	g.setColor(Color.WHITE);
 
     	for(Node cell: frame_i.vertexSet()){
 

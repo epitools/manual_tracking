@@ -55,7 +55,7 @@ public class TransitionOverlay extends StGraphOverlay{
 	 * Initialize Transition overlay
 	 * 
 	 * @param stGraph graph to analyze
-	 * @param plugin connected plugin to dispay progress of computation
+	 * @param plugin connected plugin to display progress of computation
 	 */
 	public TransitionOverlay(SpatioTemporalGraph stGraph, CellOverlay plugin) {
 		super(String.format("Transition Painter (min=%d)",plugin.varMinimalTransitionLength.getValue()),
