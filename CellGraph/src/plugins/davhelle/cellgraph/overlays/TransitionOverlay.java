@@ -223,39 +223,48 @@ public class TransitionOverlay extends StGraphOverlay{
 		//color the loser cells, i.e. that loose the bond
 		for(T1Transition t1: transitions){
 			int[] losers = t1.getLoserNodes();
-			
-			for(int loser_id: losers){
-				if(frame_i.hasTrackID(loser_id)){
-					Node loser = frame_i.getNode(loser_id);
-					g.setColor(loser_color);
-					g.fill(loser.toShape());
-				}
+			draw_line(g, frame_i, losers, loser_color);
+//			for(int loser_id: losers){
+//				if(frame_i.hasTrackID(loser_id)){
+//					Node loser = frame_i.getNode(loser_id);
+//					g.setColor(loser_color);
+//					g.fill(loser.toShape());
+//				}
+//			}
+//		}
+//		
+//		//color the winner cells, i.e. that gain the bond
+//		for(T1Transition t1: transitions){
+			if(t1.hasWinners()){
+				int[] winner_ids = t1.getWinnerNodes();
+				draw_line(g, frame_i, winner_ids, winner_color);
+			}
+		}
+	}
+
+	/**
+	 * @param g
+	 * @param frame_i
+	 * @param winner_ids
+	 */
+	private void draw_line(Graphics2D g, FrameGraph frame_i, int[] winner_ids, Color c) {
+		Node[] winners = new Node[winner_ids.length];
+		g.setColor(c);
+		
+		for(int i=0; i<winner_ids.length; i++){
+			int winner_id = winner_ids[i];
+			if(frame_i.hasTrackID(winner_id)){
+				winners[i] = frame_i.getNode(winner_id);
+				g.draw(winners[i].toShape());
 			}
 		}
 		
-		//color the winner cells, i.e. that gain the bond
-		for(T1Transition t1: transitions){
-			if(t1.hasWinners()){
-				int[] winner_ids = t1.getWinnerNodes();
-				Node[] winners = new Node[winner_ids.length];
-				g.setColor(winner_color);
-				
-				for(int i=0; i<winner_ids.length; i++){
-					int winner_id = winner_ids[i];
-					if(frame_i.hasTrackID(winner_id)){
-						winners[i] = frame_i.getNode(winner_id);
-						g.draw(winners[i].toShape());
-					}
-				}
-				
-				if(winners[0] != null && winners[1] != null)
-					g.drawLine(
-						(int)winners[0].getCentroid().getX(), 
-						(int)winners[0].getCentroid().getY(),
-						(int)winners[1].getCentroid().getX(), 
-						(int)winners[1].getCentroid().getY());
-			}
-		}
+		if(winners[0] != null && winners[1] != null)
+			g.drawLine(
+				(int)winners[0].getCentroid().getX(), 
+				(int)winners[0].getCentroid().getY(),
+				(int)winners[1].getCentroid().getX(), 
+				(int)winners[1].getCentroid().getY());
 	}
 
 	@Override
