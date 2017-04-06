@@ -142,6 +142,7 @@ public class CellOverlay extends EzPlug implements EzVarListener<OverlayEnum>{
 	public EzVarInteger 		varMinimalTransitionLength;
 	public EzVarInteger 		varMinimalOldSurvival;
 	public EzVarInteger			varT1StartingFrame;
+	public EzVarBoolean 		varLegacyPainting;
 
 	//Edge intensity
 	EzVarInteger 				varEnvelopeBuffer2;
@@ -168,6 +169,7 @@ public class CellOverlay extends EzPlug implements EzVarListener<OverlayEnum>{
 
 	//Manual Tracking
 	EzVarEnum<CellColor> 		varTrackingColor;
+
 	
 	@Override
 	protected void initialize() {
@@ -315,10 +317,12 @@ public class CellOverlay extends EzPlug implements EzVarListener<OverlayEnum>{
 		varMinimalTransitionLength = new EzVarInteger("Minimal transition length [frames]",5,1,100,1);
 		varMinimalOldSurvival = new EzVarInteger("Minimal old edge persistence [frames]",5,1,100,1);
 		varT1StartingFrame = new EzVarInteger("Starting frame for T1 detection",0,0,100,1);
+		varLegacyPainting = new EzVarBoolean("Paint legacy mode", true);
 		EzGroup groupTransitions = new EzGroup("Overlay elements",
 				varMinimalTransitionLength,
 				varMinimalOldSurvival,
-				varT1StartingFrame);
+				varT1StartingFrame,
+				varLegacyPainting);
 		
 		//Edge Intensity
 		varEnvelopeBuffer2 = new EzVarInteger("Intensity Buffer [px]", 3, 1, 10, 1);

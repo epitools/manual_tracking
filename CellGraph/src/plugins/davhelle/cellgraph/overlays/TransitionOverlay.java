@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 import jxl.write.WritableSheet;
+import plugins.adufour.ezplug.EzVarBoolean;
 import plugins.davhelle.cellgraph.CellOverlay;
 import plugins.davhelle.cellgraph.graphs.FrameGraph;
 import plugins.davhelle.cellgraph.graphs.SpatioTemporalGraph;
@@ -50,6 +51,7 @@ public class TransitionOverlay extends StGraphOverlay{
 	 * Color for winner cells, i.e .that get attached during the transition
 	 */
 	final Color winner_color = Color.magenta;
+	private EzVarBoolean paint_legacy;
 	
 	/**
 	 * Initialize Transition overlay
@@ -60,6 +62,8 @@ public class TransitionOverlay extends StGraphOverlay{
 	public TransitionOverlay(SpatioTemporalGraph stGraph, CellOverlay plugin) {
 		super(String.format("Transition Painter (min=%d)",plugin.varMinimalTransitionLength.getValue()),
 				stGraph);
+		
+		this.paint_legacy = plugin.varLegacyPainting;
 		
 		//TODO move createPolygonalTiles to PolygonalCellTile class
 		HashMap<Node, PolygonalCellTile> cell_tiles = PolygonalCellTileGenerator.createPolygonalTiles(stGraph,plugin);
@@ -223,23 +227,33 @@ public class TransitionOverlay extends StGraphOverlay{
 		//color the loser cells, i.e. that loose the bond
 		for(T1Transition t1: transitions){
 			int[] losers = t1.getLoserNodes();
-			draw_line(g, frame_i, losers, loser_color);
-//			for(int loser_id: losers){
-//				if(frame_i.hasTrackID(loser_id)){
-//					Node loser = frame_i.getNode(loser_id);
-//					g.setColor(loser_color);
-//					g.fill(loser.toShape());
-//				}
-//			}
-//		}
-//		
-//		//color the winner cells, i.e. that gain the bond
-//		for(T1Transition t1: transitions){
+			if(paint_legacy.getValue()){
+				
+				// Legacy: Fill loser cell with cyan
+				for(int loser_id: losers){
+					if(frame_i.hasTrackID(loser_id)){
+						Node loser = frame_i.getNode(loser_id);
+						g.setColor(loser_color);
+						g.fill(loser.toShape());
+					}
+				}
+				
+			} else {
+				
+				// Connect centroids of loser cells with cyan line
+				draw_line(g, frame_i, losers, loser_color);
+			
+			}
+		}
+		
+		//color the winner cells, i.e. that gain the bond
+		for(T1Transition t1: transitions){
 			if(t1.hasWinners()){
 				int[] winner_ids = t1.getWinnerNodes();
 				draw_line(g, frame_i, winner_ids, winner_color);
 			}
 		}
+
 	}
 
 	/**
@@ -255,16 +269,32 @@ public class TransitionOverlay extends StGraphOverlay{
 			int winner_id = winner_ids[i];
 			if(frame_i.hasTrackID(winner_id)){
 				winners[i] = frame_i.getNode(winner_id);
-				g.draw(winners[i].toShape());
+				if(paint_legacy.getValue())
+					g.draw(winners[i].toShape());
 			}
 		}
 		
-		if(winners[0] != null && winners[1] != null)
-			g.drawLine(
-				(int)winners[0].getCentroid().getX(), 
-				(int)winners[0].getCentroid().getY(),
-				(int)winners[1].getCentroid().getX(), 
-				(int)winners[1].getCentroid().getY());
+		if(winners[0] != null && winners[1] != null){
+			
+			double x1 = winners[0].getCentroid().getX();
+			double y1 = winners[0].getCentroid().getY(); 
+			double x2 = winners[1].getCentroid().getX();
+			double y2 = winners[1].getCentroid().getY();
+			if(paint_legacy.getValue()){
+				g.drawLine((int)x1, (int)y1, (int)x2, (int)y2 );
+			} else {
+				// shorten line segments symmetrically by 0.1 percent
+				// to not overlap with the tracking label
+				double t = 0.9;
+				double x2t = (1 - t)*x1 + t*x2;
+				double y2t = (1 - t)*y1 + t*y2;
+				
+				double x1t = (1 - t)*x2 + t*x1;
+				double y1t = (1 - t)*y2 + t*y1;
+				
+				g.drawLine((int)x1t, (int)y1t, (int)x2t, (int)y2t );
+			}
+		}
 	}
 
 	@Override
