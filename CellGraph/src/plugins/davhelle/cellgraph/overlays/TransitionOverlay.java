@@ -60,7 +60,10 @@ public class TransitionOverlay extends StGraphOverlay{
 	 * @param plugin connected plugin to display progress of computation
 	 */
 	public TransitionOverlay(SpatioTemporalGraph stGraph, CellOverlay plugin) {
-		super(String.format("Transition Painter (min=%d)",plugin.varMinimalTransitionLength.getValue()),
+		
+		super(String.format("Transition Painter (min=%d, start=%d)",
+				plugin.varMinimalTransitionLength.getValue(),
+				plugin.varT1StartingFrame.getValue()),
 				stGraph);
 		
 		this.paint_legacy = plugin.varLegacyPainting;
@@ -75,7 +78,8 @@ public class TransitionOverlay extends StGraphOverlay{
 				cell_tiles,
 				tracked_edges,
 				plugin.varMinimalTransitionLength.getValue(),
-				plugin.varMinimalOldSurvival.getValue());
+				plugin.varMinimalOldSurvival.getValue(),
+				plugin.varT1StartingFrame.getValue());
 		
 		System.out.println("Transitions found: "+transitions.size());
 	

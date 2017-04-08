@@ -1,13 +1,14 @@
 package plugins.davhelle.cellgraph.tracking;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 
-import plugins.adufour.ezplug.EzPlug;
 import plugins.davhelle.cellgraph.CellOverlay;
 import plugins.davhelle.cellgraph.graphs.FrameGraph;
 import plugins.davhelle.cellgraph.graphs.SpatioTemporalGraph;
 import plugins.davhelle.cellgraph.nodes.Edge;
+import plugins.davhelle.cellgraph.nodes.Node;
 
 /**
  * Class to track all edges contained in the first frame 
@@ -65,7 +66,7 @@ public class EdgeTracking {
 		
 		initializeTrackedEdges(stGraph, tracked_edges,starting_frame_no);
 		for(int i=starting_frame_no+1; i<stGraph.size(); i++){
-			analyzeFrame(stGraph, tracked_edges, i);
+			analyzeFrame(stGraph, tracked_edges, i,starting_frame_no);
 			plugin.getUI().setProgressBarValue((double)i/stGraph.size());
 		}
 		return tracked_edges;
@@ -85,7 +86,7 @@ public class EdgeTracking {
 		for(Edge e: first_frame.edgeSet())
 			if(e.canBeTracked(first_frame)){
 				long track_code = e.getPairCode(first_frame);
-				tracked_edges.put(track_code, new boolean[stGraph.size()]);
+				tracked_edges.put(track_code, new boolean[stGraph.size() - starting_frame_no]);
 				tracked_edges.get(track_code)[0] = true;
 			}
 	}
@@ -101,10 +102,11 @@ public class EdgeTracking {
 	 * @param i time point to analyze
 	 */
 	private static void analyzeFrame(SpatioTemporalGraph stGraph,
-			HashMap<Long, boolean[]> tracked_edges, int i) {
+			HashMap<Long, boolean[]> tracked_edges, int i, int starting_frame_no) {
 		FrameGraph frame_i = stGraph.getFrame(i);
-		trackEdgesInFrame(tracked_edges, frame_i);
-		removeUntrackedEdges(tracked_edges, frame_i);
+		FrameGraph frame_pre = stGraph.getFrame(i-1);
+		trackEdgesInFrame(tracked_edges, frame_i, starting_frame_no);
+		removeUntrackedEdges(tracked_edges, frame_i,frame_pre);
 	}
 	
 	/**
@@ -115,13 +117,14 @@ public class EdgeTracking {
 	 */
 	private static void trackEdgesInFrame(
 			HashMap<Long, boolean[]> tracked_edges,
-			FrameGraph frame_i) {
+			FrameGraph frame_i,
+			int starting_frame_no) {
 		
 		for(Edge e: frame_i.edgeSet())
 			if(e.canBeTracked(frame_i)){
 				long edge_track_code = e.getPairCode(frame_i);
 				if(tracked_edges.containsKey(edge_track_code))
-					tracked_edges.get(edge_track_code)[frame_i.getFrameNo()] = true;
+					tracked_edges.get(edge_track_code)[frame_i.getFrameNo() - starting_frame_no] = true;
 			}
 	}
 	
@@ -136,15 +139,44 @@ public class EdgeTracking {
 	 * @param frame_i frame to check
 	 */
 	private static void removeUntrackedEdges(
-			HashMap<Long, boolean[]> tracked_edges, FrameGraph frame_i) {
+			HashMap<Long, boolean[]> tracked_edges, FrameGraph frame_i, FrameGraph frame_pre) {
+		
 		//introduce the difference between lost edge because of tracking and because of T1
 		ArrayList<Long> to_eliminate = new ArrayList<Long>();
-		for(long track_code:tracked_edges.keySet())
+		ArrayList<Long> to_resize = new ArrayList<Long>();
+		
+		int i = frame_i.getFrameNo();
+		int preNo = frame_pre.getFrameNo();
+		
+		for(long track_code:tracked_edges.keySet()){
+			
+			// skip edge arrays that have been resized
+			boolean[] oldArray = tracked_edges.get(track_code);
+			if(oldArray.length < i)
+				continue;
+			
 			for(int track_id: Edge.getCodePair(track_code)) //Edge tuple (v1,v2)
 				if(!frame_i.hasTrackID(track_id)){ // vertex is missing
-					to_eliminate.add(track_code);
+					
+					// check previous frames whether cell is on the boundary
+					assert frame_pre.hasTrackID(track_id): String.format(
+							"Missing cell %d at frame %d",track_id, preNo);
+					Node pre = frame_pre.getNode(track_id);
+					
+					if(pre.onBoundary())
+						to_resize.add(track_code); 
+					else 
+						to_eliminate.add(track_code);
+					
 					break;
 				}
+		}
+		
+		// re-scale boolean array in case the cell just went out from the boundary
+		for(long track_code:to_resize){
+			boolean[] oldArray = tracked_edges.get(track_code);
+			tracked_edges.put(track_code, Arrays.copyOfRange(oldArray, 0, preNo));
+		}
 		
 		for(long track_code:to_eliminate)
 			tracked_edges.remove(track_code);

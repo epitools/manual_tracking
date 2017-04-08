@@ -54,16 +54,22 @@ public class T1Transition {
 	 */
 	int oldEdgeSurvivalLength;
 	
+	/**
+	 *  user specified starting frame
+	 */
+	int startingFrame;
+	
 
 	/**
 	 * @param stGraph parent stGraph
 	 * @param pair track ids of parent nodes
 	 * @param edge_track presence array for each time point in the stGraph
 	 */
-	public T1Transition(SpatioTemporalGraph stGraph, int[] pair, boolean[] edge_track) {
+	public T1Transition(SpatioTemporalGraph stGraph, int[] pair, boolean[] edge_track, int starting_frame) {
 		
 		this.stGraph = stGraph;
 		this.lostEdgeTrack = edge_track;
+		this.startingFrame = starting_frame;
 		
 		assert pair.length == 2: "input pair is not of length 2";
 		this.loserNodes = pair;
@@ -86,7 +92,7 @@ public class T1Transition {
 		
 		for(int i=0; i<lostEdgeTrack.length; i++)
 			if(!lostEdgeTrack[i])
-				return i;
+				return i + startingFrame;
 		
 		return -1;
 	}
@@ -100,7 +106,7 @@ public class T1Transition {
 		
 		//compute the transition vector, i.e. length of every transition
 		int[] transition_vector = new int[lostEdgeTrack.length];
-		for(int i=detectionTimePoint; i<lostEdgeTrack.length; i++)
+		for(int i=detectionTimePoint - startingFrame; i<lostEdgeTrack.length; i++)
 			if(!lostEdgeTrack[i]){
 				transition_vector[i] = transition_vector[i-1] + 1;
 				transition_vector[i-1] = 0;
@@ -112,8 +118,13 @@ public class T1Transition {
 		int max_length = 0;
 		for(int i=0; i<transition_vector.length; i++) {
 			if(transition_vector[i] > max_length){
+				System.out.println(detectionTimePoint);
 				max_length = transition_vector[i];
-				detectionTimePoint = i - max_length  + 1;
+				// i:current transition position; max_length:recorded length at i;
+				// detection point identifies the beginning of the stretch (+1)
+				// startingFrame adjust the time point for a later analysis point chosen by the user
+				detectionTimePoint = i - max_length  + 1 + startingFrame;
+				System.out.println(detectionTimePoint);
 			}
 		}
 		
@@ -226,6 +237,8 @@ public class T1Transition {
 //			
 //		}
 		Geometry lost_edge_geometry = cell_tiles.get(l1).getTileEdge(l2);
+		assert lost_edge_geometry != null: String.format(
+				"No edge geometry found @ %d for %s", previous_frame.getFrameNo(), this.toString());
 		
 		ArrayList<Integer> side_gain_nodes = new ArrayList<Integer>();
 		

@@ -50,7 +50,7 @@ public class DetectT1Transition {
 		//saveStableEdgesToCSV(stGraph, tracked_edges);
 		
 		System.out.println("\nFinding T1 transitions..");
-		int transition_no = findTransitions(stGraph, cell_tiles, tracked_edges,5,5).size();
+		int transition_no = findTransitions(stGraph, cell_tiles, tracked_edges,5,5,0).size();
 		System.out.printf("Found %d stable transition/s\n",transition_no);
 	
 	}
@@ -130,7 +130,8 @@ public class DetectT1Transition {
 			HashMap<Node, PolygonalCellTile> cell_tiles,
 			HashMap<Long, boolean[]> tracked_edges,
 			int minimalTransitionLength,
-			int minimalOldEdgeSurvivalLength
+			int minimalOldEdgeSurvivalLength,
+			int starting_frame
 			) {
 		
 		ArrayList<T1Transition> stable_transitions = new ArrayList<T1Transition>();
@@ -146,7 +147,7 @@ public class DetectT1Transition {
 				//determine whether a persistent Edge Change occurred
 				int[] pair = Edge.getCodePair(track_code);
 				
-				T1Transition transition = new T1Transition(stGraph, pair, edge_track);
+				T1Transition transition = new T1Transition(stGraph, pair, edge_track, starting_frame);
 				
 				boolean has_minimal_durationNew = transition.length() > minimalTransitionLength;
 				boolean has_minimal_durationOld = transition.getOldEdgeSurvivalLength() > minimalOldEdgeSurvivalLength;
