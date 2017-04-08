@@ -118,13 +118,11 @@ public class T1Transition {
 		int max_length = 0;
 		for(int i=0; i<transition_vector.length; i++) {
 			if(transition_vector[i] > max_length){
-				System.out.println(detectionTimePoint);
 				max_length = transition_vector[i];
 				// i:current transition position; max_length:recorded length at i;
 				// detection point identifies the beginning of the stretch (+1)
 				// startingFrame adjust the time point for a later analysis point chosen by the user
 				detectionTimePoint = i - max_length  + 1 + startingFrame;
-				System.out.println(detectionTimePoint);
 			}
 		}
 		

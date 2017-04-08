@@ -106,7 +106,7 @@ public class EdgeTracking {
 		FrameGraph frame_i = stGraph.getFrame(i);
 		FrameGraph frame_pre = stGraph.getFrame(i-1);
 		trackEdgesInFrame(tracked_edges, frame_i, starting_frame_no);
-		removeUntrackedEdges(tracked_edges, frame_i,frame_pre);
+		removeUntrackedEdges(tracked_edges, frame_i,frame_pre, starting_frame_no);
 	}
 	
 	/**
@@ -139,20 +139,23 @@ public class EdgeTracking {
 	 * @param frame_i frame to check
 	 */
 	private static void removeUntrackedEdges(
-			HashMap<Long, boolean[]> tracked_edges, FrameGraph frame_i, FrameGraph frame_pre) {
+			HashMap<Long, boolean[]> tracked_edges, 
+			FrameGraph frame_i, 
+			FrameGraph frame_pre,
+			int starting_frame_no) {
 		
 		//introduce the difference between lost edge because of tracking and because of T1
 		ArrayList<Long> to_eliminate = new ArrayList<Long>();
 		ArrayList<Long> to_resize = new ArrayList<Long>();
 		
-		int i = frame_i.getFrameNo();
-		int preNo = frame_pre.getFrameNo();
+		int i_adjusted = frame_i.getFrameNo() - starting_frame_no;
+		int preNo_adjusted = frame_pre.getFrameNo() - starting_frame_no;
 		
 		for(long track_code:tracked_edges.keySet()){
 			
 			// skip edge arrays that have been resized
 			boolean[] oldArray = tracked_edges.get(track_code);
-			if(oldArray.length < i)
+			if(oldArray.length < i_adjusted )
 				continue;
 			
 			for(int track_id: Edge.getCodePair(track_code)) //Edge tuple (v1,v2)
@@ -160,7 +163,7 @@ public class EdgeTracking {
 					
 					// check previous frames whether cell is on the boundary
 					assert frame_pre.hasTrackID(track_id): String.format(
-							"Missing cell %d at frame %d",track_id, preNo);
+							"Missing cell %d at frame %d",track_id, preNo_adjusted + starting_frame_no);
 					Node pre = frame_pre.getNode(track_id);
 					
 					if(pre.onBoundary())
@@ -175,7 +178,7 @@ public class EdgeTracking {
 		// re-scale boolean array in case the cell just went out from the boundary
 		for(long track_code:to_resize){
 			boolean[] oldArray = tracked_edges.get(track_code);
-			tracked_edges.put(track_code, Arrays.copyOfRange(oldArray, 0, preNo));
+			tracked_edges.put(track_code, Arrays.copyOfRange(oldArray, 0, preNo_adjusted));
 		}
 		
 		for(long track_code:to_eliminate)
