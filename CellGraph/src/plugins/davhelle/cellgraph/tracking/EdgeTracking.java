@@ -123,8 +123,18 @@ public class EdgeTracking {
 		for(Edge e: frame_i.edgeSet())
 			if(e.canBeTracked(frame_i)){
 				long edge_track_code = e.getPairCode(frame_i);
-				if(tracked_edges.containsKey(edge_track_code))
-					tracked_edges.get(edge_track_code)[frame_i.getFrameNo() - starting_frame_no] = true;
+				
+				if(tracked_edges.containsKey(edge_track_code)){
+					
+					boolean[] oldArray = tracked_edges.get(edge_track_code);
+					
+					int correctedFrameNo = frame_i.getFrameNo() - starting_frame_no;
+					if(oldArray.length < correctedFrameNo )
+						continue;
+					else
+						tracked_edges.get(edge_track_code)[correctedFrameNo] = true;
+			
+				}
 			}
 	}
 	
