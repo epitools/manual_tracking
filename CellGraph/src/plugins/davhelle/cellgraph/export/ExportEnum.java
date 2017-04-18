@@ -2,6 +2,7 @@ package plugins.davhelle.cellgraph.export;
 
 import plugins.davhelle.cellgraph.io.CsvTrackWriter;
 import plugins.davhelle.cellgraph.io.PdfPrinter;
+import plugins.davhelle.cellgraph.io.PresetWriter;
 import plugins.davhelle.cellgraph.io.SkeletonWriter;
 import plugins.davhelle.cellgraph.io.WktPolygonExporter;
 
@@ -40,7 +41,12 @@ public enum ExportEnum {
 	/**
 	 * CSV based Tracking file export using {@link CsvTrackWriter}
 	 */
-	CSV_TRACKING(CsvTrackWriter.DESCRIPTION);
+	CSV_TRACKING(CsvTrackWriter.DESCRIPTION),
+	
+	/**
+	 * Preset exporter using {@link PresetWriter}
+	 */
+	PRESET(PresetWriter.DESCRIPTION);
 	
 	/**
 	 * Export option description

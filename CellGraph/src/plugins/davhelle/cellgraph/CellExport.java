@@ -1,11 +1,15 @@
 package plugins.davhelle.cellgraph;
 
+import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 
+import icy.file.Saver;
 import icy.gui.frame.progress.AnnounceFrame;
 import icy.main.Icy;
 import icy.sequence.Sequence;
+import icy.sequence.SequenceExporter;
+import icy.sequence.SequenceUtil;
 import icy.swimmingPool.SwimmingObject;
 import plugins.adufour.ezplug.EzGroup;
 import plugins.adufour.ezplug.EzLabel;
@@ -165,6 +169,11 @@ public class CellExport extends EzPlug {
 					case CSV_TRACKING:
 						saveCsvTracking(stGraph);
 						break;
+					case PRESET:
+						savePreset(sequence, stGraph);
+						break;
+					default:
+						break;
 						
 					}
 				}
@@ -174,6 +183,25 @@ public class CellExport extends EzPlug {
 			new AnnounceFrame("No spatio temporal graph found in ICYsp, please load a CellGraph first!");
 	}
 	
+	private void savePreset(Sequence sequence, SpatioTemporalGraph stGraph) {
+		
+		String export_folder = SaveFolderDialog.chooseFolder("Preset files");
+		if(export_folder == null)
+			return;
+		
+		// save copy of current sequence as skeleton.tif
+		Sequence copy = SequenceUtil.getCopy(sequence);
+		Saver.save(copy, new File(export_folder+"/skeletons.tif"), false, false);
+		
+		// save current used skeletons as WKT files
+		writeWktSkeletons(stGraph, export_folder);
+		
+		// save current tracking
+		writeCsvTracking(stGraph, export_folder);
+		
+		new AnnounceFrame("Preset successfully saved in: "+export_folder,10);
+	}
+
 	/**
 	 * Export 8bit tiff images from the loaded stGraph
 	 * 
@@ -186,6 +214,16 @@ public class CellExport extends EzPlug {
 		if(export_folder == null)
 			return;
 		
+		writeSkeletons(sequence, stGraph, export_folder);
+	}
+
+	/**
+	 * @param sequence
+	 * @param stGraph
+	 * @param export_folder
+	 */
+	private void writeSkeletons(Sequence sequence, SpatioTemporalGraph stGraph,
+			String export_folder) {
 		SkeletonWriter writer = new SkeletonWriter(sequence);
 		
 		for(int i=0; i < stGraph.size(); i++){
@@ -242,6 +280,15 @@ public class CellExport extends EzPlug {
 		if(export_folder == null)
 			return;
 			
+		writeWktSkeletons(stGraph, export_folder);
+	}
+
+	/**
+	 * @param stGraph
+	 * @param export_folder
+	 */
+	private void writeWktSkeletons(SpatioTemporalGraph stGraph,
+			String export_folder) {
 		WktPolygonExporter wkt_exporter = new WktPolygonExporter();
 		
 		for(int i=0; i < stGraph.size(); i++){
@@ -266,11 +313,20 @@ public class CellExport extends EzPlug {
 		if(export_folder == null)
 			return;
 		
+		writeCsvTracking(stGraph, export_folder);
+		
+	}
+
+	/**
+	 * @param stGraph
+	 * @param export_folder
+	 */
+	private void writeCsvTracking(SpatioTemporalGraph stGraph,
+			String export_folder) {
 		CsvTrackWriter track_writer = new CsvTrackWriter(stGraph,export_folder);
 		track_writer.write();
 		
 		System.out.println("Successfully saved tracking to: "+export_folder);
-		
 	}
 	
 }
