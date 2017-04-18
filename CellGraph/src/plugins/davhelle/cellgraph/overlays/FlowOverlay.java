@@ -51,7 +51,7 @@ public class FlowOverlay extends StGraphOverlay {
 			"1 - smoothened (CatmullRom)<br/>" +
 			"2 - simplified (Douglas-Peucker)";
 	
-	HashMap<Node,LineString> flow = new HashMap<Node,LineString>();
+	HashMap<Node,LineString> rawFlow = new HashMap<Node,LineString>();
 	HashMap<Node,Geometry> simpleFlow = new HashMap<Node, Geometry>();
 	HashMap<Node,LineString> smoothFlow = new HashMap<Node, LineString>();
 	
@@ -62,7 +62,7 @@ public class FlowOverlay extends StGraphOverlay {
 	ShapeWriter writer = new ShapeWriter();
 
 	public FlowOverlay(SpatioTemporalGraph stGraph, int flow_mode) {
-		super("Flow over time", stGraph);
+		super(String.format("Flow over time (%d)",flow_mode), stGraph);
 		
 		this.flow_paint_style = flow_mode;
 
@@ -88,7 +88,7 @@ public class FlowOverlay extends StGraphOverlay {
 			LineString cell_path = factory.createLineString(
 					list.toArray(new Coordinate[list.size()]));
 
-			flow.put(n,cell_path);
+			rawFlow.put(n,cell_path);
 			
             Geometry simple = DouglasPeuckerSimplifier.simplify(cell_path, 3.0);
             if (simple.getCoordinates().length > 2)
@@ -132,8 +132,8 @@ public class FlowOverlay extends StGraphOverlay {
 			switch( flow_paint_style ){
 
 			case 0:
-				if(flow.containsKey(n)){
-					LineString s = flow.get(n);
+				if(rawFlow.containsKey(n)){
+					LineString s = rawFlow.get(n);
 					Shape flow = writer.toShape(s);
 					g.setColor(Color.cyan);
 					g.draw(flow);
@@ -173,8 +173,10 @@ public class FlowOverlay extends StGraphOverlay {
 	 */
 	public void saveXML( File XMLFile )
 	{
-
-		boolean export_smooth = true;
+		
+		HashMap<Node,LineString> trackToExport = rawFlow;
+		if(flow_paint_style == 1)
+			trackToExport = smoothFlow;
 		
 		Document document = XMLUtil.createDocument( true );
 		Element documentElement = document.getDocumentElement();
@@ -187,74 +189,37 @@ public class FlowOverlay extends StGraphOverlay {
 				documentElement , "trackgroup" );
 		
 		for(Node n: stGraph.getFrame(0).vertexSet()){
-			
-			if(export_smooth){
-				if(!smoothFlow.containsKey(n))
-					continue;
-				
-				Element trackElement = XMLUtil.addElement( 
-						trackGroupElement , "track" );				
-				XMLUtil.setAttributeIntValue( 
-						trackElement , "id" , n.getTrackID() );
-				
-				Coordinate[] smooth_track = smoothFlow.get(n).getCoordinates();
-				int smooth_length = smooth_track.length;
-				
-				for(int i=0; i < smooth_length; i++){
-						
-					Element detection = document.createElement("detection");
-					trackElement.appendChild( detection );
 
-					Coordinate centroid = smooth_track[i];
-					double x = roundDecimals2(centroid.x);
-					double y = roundDecimals2(centroid.y);
-					
-					XMLUtil.setAttributeDoubleValue( detection , "x" , x );
-					XMLUtil.setAttributeDoubleValue( detection , "y" , y );
-					XMLUtil.setAttributeIntValue( detection , "t" , i );
-					
-				}
+			if(!trackToExport.containsKey(n))
+				continue;
+			
+			Element trackElement = XMLUtil.addElement( 
+					trackGroupElement , "track" );				
+			XMLUtil.setAttributeIntValue( 
+					trackElement , "id" , n.getTrackID() );
+			
+			Coordinate[] track = trackToExport.get(n).getCoordinates();
+			int track_length = track.length;
+			
+			for(int i=0; i < track_length; i++){
+				
+				Element detection = document.createElement("detection");
+				trackElement.appendChild( detection );
+				
+				Coordinate centroid = track[i];
+				
+				double x = roundDecimals2(centroid.x);
+				double y = roundDecimals2(centroid.y);
+				
+				XMLUtil.setAttributeDoubleValue( detection , "x" , x );
+				XMLUtil.setAttributeDoubleValue( detection , "y" , y );
+				XMLUtil.setAttributeIntValue( detection , "t" , i );
 				
 			}
-			else{
-				if(!n.hasNext())
-					continue;
 				
-				Element trackElement = XMLUtil.addElement( 
-						trackGroupElement , "track" );				
-				XMLUtil.setAttributeIntValue( 
-						trackElement , "id" , n.getTrackID() );
-				
-				//Add initial position
-				addDetection(n, trackElement, document);
-				
-				while(n.hasNext()){
-					n = n.getNext();
-					addDetection(n, trackElement, document);
-				}
-			}
 		}
 		
 		XMLUtil.saveDocument( document , XMLFile );
-	}
-
-	/**
-	 * @param n
-	 * @param track
-	 * @param document
-	 */
-	private void addDetection(Node n, Element track, Document document) {
-		Element detection = document.createElement("detection");
-		track.appendChild( detection );
-
-		Coordinate centroid = n.getCentroid().getCoordinate();
-		double x = roundDecimals2(centroid.x);
-		double y = roundDecimals2(centroid.y);
-		int t = n.getBelongingFrame().getFrameNo();
-		
-		XMLUtil.setAttributeDoubleValue( detection , "x" , x );
-		XMLUtil.setAttributeDoubleValue( detection , "y" , y );
-		XMLUtil.setAttributeIntValue( detection , "t" , t );
 	}
 	
 	/**
@@ -276,21 +241,29 @@ public class FlowOverlay extends StGraphOverlay {
 	
 	@Override
 	public void actionPerformed(ActionEvent e) {
-		try {
-			String file_name = SaveDialog.chooseFile(
-					"Please choose where to save the XML track",
-					"~/Desktop",
-					"cell_track", ".xml");
-			
-			saveXML(new File(file_name));
-			
-			new AnnounceFrame("XML file exported successfully to: "+file_name,10);
 		
-		} catch (Exception xmlException) {
-			IcyExceptionHandler.showErrorMessage(xmlException, true, true);
+		if (flow_paint_style > 1)
+			new AnnounceFrame("XML export not yet implemented for mode "+flow_paint_style);
+		else{
+			try {
+				String file_name = SaveDialog.chooseFile(
+						"Please choose where to save the XML track",
+						"~/Desktop",
+						"cell_track", ".xml");
+				
+				if(file_name == null)
+					return;
+
+				saveXML(new File(file_name));
+
+				new AnnounceFrame("XML file exported successfully to: "+file_name,10);
+
+			} 
+			catch (Exception xmlException) {
+				IcyExceptionHandler.showErrorMessage(xmlException, true, true);
+			}
 		}
 	}
-	
 
 	@Override
 	void writeFrameSheet(WritableSheet sheet, FrameGraph frame) {
