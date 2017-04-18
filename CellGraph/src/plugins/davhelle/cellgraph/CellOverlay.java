@@ -42,6 +42,7 @@ import plugins.davhelle.cellgraph.overlays.EdgeStabilityOverlay;
 import plugins.davhelle.cellgraph.overlays.EllipseFitColorOverlay;
 import plugins.davhelle.cellgraph.overlays.EllipseFitterOverlay;
 import plugins.davhelle.cellgraph.overlays.ElongationRatioOverlay;
+import plugins.davhelle.cellgraph.overlays.FlowOverlay;
 import plugins.davhelle.cellgraph.overlays.GraphOverlay;
 import plugins.davhelle.cellgraph.overlays.ManualTrackingOverlay;
 import plugins.davhelle.cellgraph.overlays.OverlayEnum;
@@ -498,9 +499,9 @@ public class CellOverlay extends EzPlug implements EzVarListener<OverlayEnum>{
 							varSurfaceFile.getValue().getAbsolutePath(),
 							varLoadAllSurfaceFiles.getValue()));
 			break;
-//		case TRACKING_FLOW:
-//			sequence.addOverlay(new FlowOverlay(stGraph));
-//			break;
+		case TRACKING_FLOW:
+			sequence.addOverlay(new FlowOverlay(stGraph));
+			break;
 		case ELLIPSE_FIT:
 			sequence.addOverlay(
 					new EllipseFitterOverlay(stGraph,sequence));

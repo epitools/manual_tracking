@@ -1,10 +1,14 @@
 package plugins.davhelle.cellgraph.overlays;
 
+import icy.gui.dialog.SaveDialog;
+import icy.gui.frame.progress.AnnounceFrame;
+import icy.system.IcyExceptionHandler;
 import icy.util.XMLUtil;
 
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.Shape;
+import java.awt.event.ActionEvent;
 import java.awt.geom.Line2D.Double;
 import java.io.File;
 import java.util.ArrayList;
@@ -48,6 +52,7 @@ public class FlowOverlay extends StGraphOverlay {
 	HashMap<Node,Geometry> simpleFlow = new HashMap<Node, Geometry>();
 	HashMap<Node,LineString> smoothFlow = new HashMap<Node, LineString>();
 	
+	//Default values
 	private int smooth_interval = 10;
 	private int flow_paint_style = 0;
 	
@@ -110,8 +115,6 @@ public class FlowOverlay extends StGraphOverlay {
             
 		}
 		
-		saveXML(new File("/Users/davide/Desktop/flowTrack.xml"));
-	
 	}
 
 	@Override
@@ -139,7 +142,7 @@ public class FlowOverlay extends StGraphOverlay {
 					g.draw(flow);
 				}
 				break;
-			case 3:
+			case 2:
 				if(simpleFlow.containsKey(n)){
 					Geometry s = simpleFlow.get(n);
 					Shape flow = writer.toShape(s);
@@ -265,6 +268,24 @@ public class FlowOverlay extends StGraphOverlay {
 		// TODO Auto-generated method stub
 
 	}
+	
+	@Override
+	public void actionPerformed(ActionEvent e) {
+		try {
+			String file_name = SaveDialog.chooseFile(
+					"Please choose where to save the XML track",
+					"~/Desktop",
+					"cell_track", ".xml");
+			
+			saveXML(new File(file_name));
+			
+			new AnnounceFrame("XML file exported successfully to: "+file_name,10);
+		
+		} catch (Exception xmlException) {
+			IcyExceptionHandler.showErrorMessage(xmlException, true, true);
+		}
+	}
+	
 
 	@Override
 	void writeFrameSheet(WritableSheet sheet, FrameGraph frame) {
