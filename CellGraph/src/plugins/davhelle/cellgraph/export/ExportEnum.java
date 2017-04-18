@@ -4,6 +4,7 @@ import plugins.davhelle.cellgraph.io.CsvTrackWriter;
 import plugins.davhelle.cellgraph.io.PdfPrinter;
 import plugins.davhelle.cellgraph.io.PresetWriter;
 import plugins.davhelle.cellgraph.io.SkeletonWriter;
+import plugins.davhelle.cellgraph.io.SummaryWriter;
 import plugins.davhelle.cellgraph.io.WktPolygonExporter;
 
 /**
@@ -46,7 +47,12 @@ public enum ExportEnum {
 	/**
 	 * Preset exporter using {@link PresetWriter}
 	 */
-	PRESET(PresetWriter.DESCRIPTION);
+	PRESET(PresetWriter.DESCRIPTION),
+	
+	/**
+	 * Small summary of features describing the sample
+	 */
+	SUMMARY(SummaryWriter.DESCRIPTION);
 	
 	/**
 	 * Export option description

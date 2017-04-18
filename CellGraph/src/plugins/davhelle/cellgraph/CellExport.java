@@ -29,6 +29,7 @@ import plugins.davhelle.cellgraph.io.CsvTrackWriter;
 import plugins.davhelle.cellgraph.io.PdfPrinter;
 import plugins.davhelle.cellgraph.io.SaveFolderDialog;
 import plugins.davhelle.cellgraph.io.SkeletonWriter;
+import plugins.davhelle.cellgraph.io.SummaryWriter;
 import plugins.davhelle.cellgraph.io.WktPolygonExporter;
 import plugins.davhelle.cellgraph.overlays.CellColorTagOverlay;
 
@@ -172,6 +173,9 @@ public class CellExport extends EzPlug {
 					case PRESET:
 						savePreset(sequence, stGraph);
 						break;
+					case SUMMARY:
+						SummaryWriter summary = new SummaryWriter(stGraph);
+						summary.writeXLSFile();
 					default:
 						break;
 						
