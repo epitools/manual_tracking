@@ -143,7 +143,7 @@ public class FlowOverlay extends StGraphOverlay {
 				if(smoothFlow.containsKey(n)){
 					LineString s = smoothFlow.get(n);
 					Shape flow = writer.toShape(s);
-					g.setColor(Color.blue);
+					g.setColor(Color.red);
 					g.draw(flow);
 				}
 				break;
