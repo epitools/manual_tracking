@@ -171,6 +171,8 @@ public class CellOverlay extends EzPlug implements EzVarListener<OverlayEnum>{
 	//Manual Tracking
 	EzVarEnum<CellColor> 		varTrackingColor;
 
+	private EzVarInteger varFlowMode;
+
 	
 	@Override
 	protected void initialize() {
@@ -373,7 +375,10 @@ public class CellOverlay extends EzPlug implements EzVarListener<OverlayEnum>{
 		EzGroup groupManualTracking = new EzGroup("Overlay elements",
 				varTrackingColor);
 		
-
+		// Tracking Flow
+		varFlowMode = new EzVarInteger("Mode",0,0,2,1);
+		EzGroup groupTrackingFlow = new EzGroup("Overlay elements",
+				varFlowMode);
 		
 		//Describe the visibility of each overlay parameters
 		varPlotting.addVisibilityTriggerTo(groupCellMap, OverlayEnum.CELL_OUTLINE);
@@ -390,7 +395,7 @@ public class CellOverlay extends EzPlug implements EzVarListener<OverlayEnum>{
 		varPlotting.addVisibilityTriggerTo(groupEdgeOrientation, OverlayEnum.EDGE_ORIENTATION);
 		varPlotting.addVisibilityTriggerTo(groupCellProjection, OverlayEnum.CELL_PROJECTION);
 		varPlotting.addVisibilityTriggerTo(groupManualTracking, OverlayEnum.TEST);
-		
+		varPlotting.addVisibilityTriggerTo(groupTrackingFlow, OverlayEnum.TRACKING_FLOW);
 		
 		
 		return new EzGroup("1. SELECT OVERLAY TO ADD",
@@ -408,7 +413,8 @@ public class CellOverlay extends EzPlug implements EzVarListener<OverlayEnum>{
 				groupDivisionOrientation,
 				groupEdgeOrientation,
 				groupCellProjection,
-				groupManualTracking);
+				groupManualTracking,
+				groupTrackingFlow);
 	}
 
 	@Override
@@ -500,7 +506,7 @@ public class CellOverlay extends EzPlug implements EzVarListener<OverlayEnum>{
 							varLoadAllSurfaceFiles.getValue()));
 			break;
 		case TRACKING_FLOW:
-			sequence.addOverlay(new FlowOverlay(stGraph));
+			sequence.addOverlay(new FlowOverlay(stGraph, varFlowMode.getValue()));
 			break;
 		case ELLIPSE_FIT:
 			sequence.addOverlay(

@@ -46,7 +46,10 @@ public class FlowOverlay extends StGraphOverlay {
 	
 	public static final String DESCRIPTION =
 			"Overlay representing the tracking positions of cell centers<br/>" +
-			"as smooth line";
+			"Choose from one of the following modes:<br/>" +
+			"0 - raw coordinates<br/>" +
+			"1 - smoothened (CatmullRom)<br/>" +
+			"2 - simplified (Douglas-Peucker)";
 	
 	HashMap<Node,LineString> flow = new HashMap<Node,LineString>();
 	HashMap<Node,Geometry> simpleFlow = new HashMap<Node, Geometry>();
@@ -54,12 +57,14 @@ public class FlowOverlay extends StGraphOverlay {
 	
 	//Default values
 	private int smooth_interval = 10;
-	private int flow_paint_style = 0;
+	private int flow_paint_style;
 	
 	ShapeWriter writer = new ShapeWriter();
 
-	public FlowOverlay(SpatioTemporalGraph stGraph) {
+	public FlowOverlay(SpatioTemporalGraph stGraph, int flow_mode) {
 		super("Flow over time", stGraph);
+		
+		this.flow_paint_style = flow_mode;
 
 		GeometryFactory factory = new GeometryFactory();
 		
