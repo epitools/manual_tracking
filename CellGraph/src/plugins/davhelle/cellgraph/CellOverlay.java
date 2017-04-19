@@ -26,36 +26,7 @@ import plugins.davhelle.cellgraph.io.IntensitySummaryType;
 import plugins.davhelle.cellgraph.io.SaveFolderDialog;
 import plugins.davhelle.cellgraph.misc.CellColor;
 import plugins.davhelle.cellgraph.misc.VoronoiGenerator;
-import plugins.davhelle.cellgraph.overlays.AlwaysTrackedCellsOverlay;
-import plugins.davhelle.cellgraph.overlays.AreaGradientOverlay;
-import plugins.davhelle.cellgraph.overlays.BorderOverlay;
-import plugins.davhelle.cellgraph.overlays.CellColorTagOverlay;
-import plugins.davhelle.cellgraph.overlays.CentroidOverlay;
-import plugins.davhelle.cellgraph.overlays.CorrectionOverlay;
-import plugins.davhelle.cellgraph.overlays.DisplacementOverlay;
-import plugins.davhelle.cellgraph.overlays.DivisionOrientationOverlay;
-import plugins.davhelle.cellgraph.overlays.DivisionOverlay;
-import plugins.davhelle.cellgraph.overlays.EdgeColorTagOverlay;
-import plugins.davhelle.cellgraph.overlays.EdgeIntensityOverlay;
-import plugins.davhelle.cellgraph.overlays.EdgeOrientationOverlay;
-import plugins.davhelle.cellgraph.overlays.EdgeStabilityOverlay;
-import plugins.davhelle.cellgraph.overlays.EllipseFitColorOverlay;
-import plugins.davhelle.cellgraph.overlays.EllipseFitterOverlay;
-import plugins.davhelle.cellgraph.overlays.ElongationRatioOverlay;
-import plugins.davhelle.cellgraph.overlays.FlowOverlay;
-import plugins.davhelle.cellgraph.overlays.GraphOverlay;
-import plugins.davhelle.cellgraph.overlays.ManualTrackingOverlay;
-import plugins.davhelle.cellgraph.overlays.OverlayEnum;
-import plugins.davhelle.cellgraph.overlays.PolygonClassOverlay;
-import plugins.davhelle.cellgraph.overlays.PolygonOverlay;
-import plugins.davhelle.cellgraph.overlays.ProjectionOverlay;
-import plugins.davhelle.cellgraph.overlays.StGraphOverlay;
-import plugins.davhelle.cellgraph.overlays.TestOverlay;
-import plugins.davhelle.cellgraph.overlays.TrackIdOverlay;
-import plugins.davhelle.cellgraph.overlays.TrackingOverlay;
-import plugins.davhelle.cellgraph.overlays.TransitionOverlay;
-import plugins.davhelle.cellgraph.overlays.VoronoiAreaDifferenceOverlay;
-import plugins.davhelle.cellgraph.overlays.VoronoiOverlay;
+import plugins.davhelle.cellgraph.overlays.*;
 
 /**
  * CellPainter is a plugin do generate overlays by using the

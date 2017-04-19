@@ -1,16 +1,16 @@
 package plugins.davhelle.cellgraph;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-
 import icy.file.Saver;
 import icy.gui.frame.progress.AnnounceFrame;
 import icy.main.Icy;
 import icy.sequence.Sequence;
-import icy.sequence.SequenceExporter;
 import icy.sequence.SequenceUtil;
 import icy.swimmingPool.SwimmingObject;
+
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+
 import plugins.adufour.ezplug.EzGroup;
 import plugins.adufour.ezplug.EzLabel;
 import plugins.adufour.ezplug.EzPlug;
