@@ -9,6 +9,7 @@ import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.Shape;
 import java.awt.event.ActionEvent;
+import java.awt.geom.Ellipse2D;
 import java.awt.geom.Line2D.Double;
 import java.io.File;
 import java.util.ArrayList;
@@ -125,6 +126,9 @@ public class FlowOverlay extends StGraphOverlay {
 	@Override
 	public void paintFrame(Graphics2D g, FrameGraph frame_i) {
 		
+		//circle radius highlighting the current frame position
+		double r = 10; 
+		
 		for(Node n: frame_i.vertexSet()){
 
 			n=n.getFirst();
@@ -137,6 +141,11 @@ public class FlowOverlay extends StGraphOverlay {
 					Shape flow = writer.toShape(s);
 					g.setColor(Color.cyan);
 					g.draw(flow);
+					
+					Coordinate[] track = rawFlow.get(n).getCoordinates();
+					Coordinate c = track[frame_i.getFrameNo()];
+					Ellipse2D.Double shape = new Ellipse2D.Double(c.x - r/2, c.y - r/2, r, r);
+				    g.draw(shape);
 				}
 				break;
 			case 1:
@@ -145,6 +154,11 @@ public class FlowOverlay extends StGraphOverlay {
 					Shape flow = writer.toShape(s);
 					g.setColor(Color.red);
 					g.draw(flow);
+					
+					Coordinate[] track = smoothFlow.get(n).getCoordinates();
+					Coordinate c = track[frame_i.getFrameNo()];
+					Ellipse2D.Double shape = new Ellipse2D.Double(c.x - r/2, c.y - r/2, r, r);
+				    g.draw(shape);
 				}
 				break;
 			case 2:
@@ -153,6 +167,13 @@ public class FlowOverlay extends StGraphOverlay {
 					Shape flow = writer.toShape(s);
 					g.setColor(Color.green);
 					g.draw(flow);
+					
+					// simple flow contains less coordinates than the original track so the raw
+					// coordinates are highlighted
+					Coordinate[] track = rawFlow.get(n).getCoordinates();
+					Coordinate c = track[frame_i.getFrameNo()];
+					Ellipse2D.Double shape = new Ellipse2D.Double(c.x - r/2, c.y - r/2, r, r);
+				    g.draw(shape);
 				}
 				break;
 			default:
