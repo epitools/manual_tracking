@@ -46,7 +46,7 @@ public class DetectT1Transition {
 		
 		System.out.println("\nAnalyzing the cell edges..");
 		EdgeTracking edgeTracking = new EdgeTracking(stGraph, 0);
-		HashMap<Long, boolean[]> tracked_edges = edgeTracking.trackEdges();
+		HashMap<Long, Long[]> tracked_edges = edgeTracking.trackEdges();
 		
 		//saveStableEdgesToCSV(stGraph, tracked_edges);
 		
@@ -65,10 +65,10 @@ public class DetectT1Transition {
 	 * @param tracked_edges a Map containing a boolean presence array for every edgeID for every frame
 	 */
 	public static void saveStableEdgesToCSV(SpatioTemporalGraph stGraph,
-			HashMap<Long, boolean[]> tracked_edges) {
+			HashMap<Long, Long[]> tracked_edges) {
 		StringBuilder builder = new StringBuilder();
 		for(long track_code:tracked_edges.keySet()){
-			boolean[] edge_track = tracked_edges.get(track_code);
+			Long[] edge_track = tracked_edges.get(track_code);
 			
 			if(hasStableTrack(edge_track)){
 				int[] cell_ids = Edge.getCodePair(track_code);
@@ -106,9 +106,9 @@ public class DetectT1Transition {
 		CsvWriter.writeOutBuilder(builder, main_output_file);
 	}
 
-	public static boolean hasStableTrack(boolean[] edge_track){
-		for(boolean tracked_in_frame_i: edge_track)
-			if(!tracked_in_frame_i)
+	public static boolean hasStableTrack(Long[] edge_track){
+		for(Long tracked_in_frame_i: edge_track)
+			if(tracked_in_frame_i == null)
 				return false;
 		
 		return true;
@@ -129,7 +129,7 @@ public class DetectT1Transition {
 	public static ArrayList<T1Transition> findTransitions(
 			SpatioTemporalGraph stGraph,
 			HashMap<Node, PolygonalCellTile> cell_tiles,
-			HashMap<Long, boolean[]> tracked_edges,
+			HashMap<Long, Long[]> tracked_edges,
 			int minimalTransitionLength,
 			int minimalOldEdgeSurvivalLength,
 			int starting_frame
@@ -142,7 +142,7 @@ public class DetectT1Transition {
 		
 		edge_loop:
 		for(long track_code:tracked_edges.keySet()){
-			boolean[] edge_track = tracked_edges.get(track_code);
+			Long[] edge_track = tracked_edges.get(track_code);
 			
 			if(!hasStableTrack(edge_track)){
 				//determine whether a persistent Edge Change occurred

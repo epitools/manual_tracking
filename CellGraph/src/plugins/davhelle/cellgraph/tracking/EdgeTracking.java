@@ -26,7 +26,7 @@ import plugins.davhelle.cellgraph.nodes.Node;
  */
 public class EdgeTracking {
 	
-	HashMap<Long, boolean[]> tracked_edges;
+	HashMap<Long, Long[]> tracked_edges;
 	SpatioTemporalGraph stGraph;
 	int starting_frame_no;
 	
@@ -37,7 +37,7 @@ public class EdgeTracking {
 	 * @param startingFrameNo the frame at which to start the tracking
 	 */
 	public EdgeTracking(SpatioTemporalGraph stGraph, int startingFrameNo){
-		tracked_edges = new HashMap<Long,boolean[]>();
+		tracked_edges = new HashMap<Long,Long[]>();
 		this.stGraph = stGraph;
 		this.starting_frame_no = startingFrameNo;
 	}
@@ -49,7 +49,7 @@ public class EdgeTracking {
 	 * tells if the edge is present or not at the corresponding time point. The key of the map is
 	 * the cantor paring of the edges vertex ids.
 	 */
-	public HashMap<Long, boolean[]> trackEdges(){
+	public HashMap<Long, Long[]> trackEdges(){
 		
 		initializeTrackedEdges();
 		for(int i=1; i<stGraph.size(); i++)
@@ -66,7 +66,7 @@ public class EdgeTracking {
 	 * tells if the edge is present or not at the corresponding time point. The key of the map is
 	 * the cantor paring of the edges vertex ids.
 	 */
-	public HashMap<Long, boolean[]> trackEdges(CellOverlay plugin) {
+	public HashMap<Long, Long[]> trackEdges(CellOverlay plugin) {
 		
 		plugin.getUI().setProgressBarMessage("Tracking Edges..");
 		plugin.getUI().setProgressBarValue(0.0);
@@ -88,8 +88,8 @@ public class EdgeTracking {
 		for(Edge e: first_frame.edgeSet())
 			if(e.canBeTracked(first_frame)){
 				long track_code = e.getPairCode(first_frame);
-				tracked_edges.put(track_code, new boolean[stGraph.size() - starting_frame_no]);
-				tracked_edges.get(track_code)[0] = true;
+				tracked_edges.put(track_code, new Long[stGraph.size() - starting_frame_no]);
+				tracked_edges.get(track_code)[0] = track_code;
 			}
 	}
 	
@@ -121,15 +121,17 @@ public class EdgeTracking {
 				
 				if(tracked_edges.containsKey(edge_track_code)){
 					
-					boolean[] oldArray = tracked_edges.get(edge_track_code);
+					Long[] oldArray = tracked_edges.get(edge_track_code);
 					
 					int correctedFrameNo = frame_i.getFrameNo() - starting_frame_no;
 					if(oldArray.length < correctedFrameNo )
 						continue;
 					else
-						tracked_edges.get(edge_track_code)[correctedFrameNo] = true;
+						tracked_edges.get(edge_track_code)[correctedFrameNo] = edge_track_code;
 			
 				}
+			} else {
+				//Check for possible divisions
 			}
 	}
 	
@@ -157,7 +159,7 @@ public class EdgeTracking {
 		for(long track_code:tracked_edges.keySet()){
 			
 			// skip edge arrays that have been resized
-			boolean[] oldArray = tracked_edges.get(track_code);
+			Long[] oldArray = tracked_edges.get(track_code);
 			if(oldArray.length < i_adjusted )
 				continue;
 			
@@ -180,7 +182,7 @@ public class EdgeTracking {
 		
 		// re-scale boolean array in case the cell just went out from the boundary
 		for(long track_code:to_resize){
-			boolean[] oldArray = tracked_edges.get(track_code);
+			Long[] oldArray = tracked_edges.get(track_code);
 			tracked_edges.put(track_code, Arrays.copyOfRange(oldArray, 0, preNo_adjusted));
 		}
 		
