@@ -45,7 +45,8 @@ public class DetectT1Transition {
 		HashMap<Node, PolygonalCellTile> cell_tiles = PolygonalCellTileGenerator.createPolygonalTiles(stGraph);
 		
 		System.out.println("\nAnalyzing the cell edges..");
-		HashMap<Long, boolean[]> tracked_edges = EdgeTracking.trackEdges(stGraph);
+		EdgeTracking edgeTracking = new EdgeTracking(stGraph, 0);
+		HashMap<Long, boolean[]> tracked_edges = edgeTracking.trackEdges();
 		
 		//saveStableEdgesToCSV(stGraph, tracked_edges);
 		

@@ -25,24 +25,35 @@ import plugins.davhelle.cellgraph.nodes.Node;
  *
  */
 public class EdgeTracking {
-	//TODO transform static methods to object
+	
+	HashMap<Long, boolean[]> tracked_edges;
+	SpatioTemporalGraph stGraph;
+	int starting_frame_no;
+	
+	/**
+	 * Initialize the EdgeTracking with two parameters
+	 * 
+	 * @param stGraph the spatio-temporal graph of which edges to track
+	 * @param startingFrameNo the frame at which to start the tracking
+	 */
+	public EdgeTracking(SpatioTemporalGraph stGraph, int startingFrameNo){
+		tracked_edges = new HashMap<Long,boolean[]>();
+		this.stGraph = stGraph;
+		this.starting_frame_no = startingFrameNo;
+	}
 	
 	/**
 	 * Tracks all the edges starting from the first frame in the graph
 	 * 
-	 * @param stGraph the graph whose edges to track
 	 * @return An array of presence for each edge. Each array cell 
 	 * tells if the edge is present or not at the corresponding time point. The key of the map is
 	 * the cantor paring of the edges vertex ids.
 	 */
-	public static HashMap<Long, boolean[]> trackEdges(
-			SpatioTemporalGraph stGraph) {
-		HashMap<Long, boolean[]> tracked_edges = new HashMap<Long,boolean[]>();
+	public HashMap<Long, boolean[]> trackEdges(){
 		
-		int startingFrameNo = 0;
-		initializeTrackedEdges(stGraph, tracked_edges, startingFrameNo);
+		initializeTrackedEdges();
 		for(int i=1; i<stGraph.size(); i++)
-			analyzeFrame(stGraph, tracked_edges, i, startingFrameNo);
+			analyzeFrame(i);
 		
 		return tracked_edges;
 	}
@@ -50,24 +61,19 @@ public class EdgeTracking {
 	/**
 	 * Tracks all the edges starting from the first frame in the graph
 	 * 
-	 * @param stGraph the graph whose edges to track
 	 * @param plugin calling ezPlug GUI to feedback progress
 	 * @return An array of presence for each edge. Each array cell 
 	 * tells if the edge is present or not at the corresponding time point. The key of the map is
 	 * the cantor paring of the edges vertex ids.
 	 */
-	public static HashMap<Long, boolean[]> trackEdges(
-			SpatioTemporalGraph stGraph, CellOverlay plugin) {
-		HashMap<Long, boolean[]> tracked_edges = new HashMap<Long,boolean[]>();
-		
-		int starting_frame_no = plugin.varT1StartingFrame.getValue();
+	public HashMap<Long, boolean[]> trackEdges(CellOverlay plugin) {
 		
 		plugin.getUI().setProgressBarMessage("Tracking Edges..");
 		plugin.getUI().setProgressBarValue(0.0);
 		
-		initializeTrackedEdges(stGraph, tracked_edges,starting_frame_no);
+		initializeTrackedEdges();
 		for(int i=starting_frame_no+1; i<stGraph.size(); i++){
-			analyzeFrame(stGraph, tracked_edges, i,starting_frame_no);
+			analyzeFrame(i);
 			plugin.getUI().setProgressBarValue((double)i/stGraph.size());
 		}
 		return tracked_edges;
@@ -76,13 +82,8 @@ public class EdgeTracking {
 	/**
 	 * Initializes the boolean arrays for each edge in the first frame
 	 * 
-	 * @param stGraph graph to analyze
-	 * @param tracked_edges empty map
 	 */
-	private static void initializeTrackedEdges(
-			SpatioTemporalGraph stGraph,
-			HashMap<Long, boolean[]> tracked_edges,
-			int starting_frame_no) {
+	private void initializeTrackedEdges() {
 		FrameGraph first_frame = stGraph.getFrame(starting_frame_no);
 		for(Edge e: first_frame.edgeSet())
 			if(e.canBeTracked(first_frame)){
@@ -98,28 +99,21 @@ public class EdgeTracking {
 	 * by verifying the presence of each included edge at the
 	 * frame i of the stGraph. 
 	 * 
-	 * @param stGraph graph to analyze
-	 * @param tracked_edges initialized output map
 	 * @param i time point to analyze
 	 */
-	private static void analyzeFrame(SpatioTemporalGraph stGraph,
-			HashMap<Long, boolean[]> tracked_edges, int i, int starting_frame_no) {
+	private void analyzeFrame(int i) {
 		FrameGraph frame_i = stGraph.getFrame(i);
 		FrameGraph frame_pre = stGraph.getFrame(i-1);
-		trackEdgesInFrame(tracked_edges, frame_i, starting_frame_no);
-		removeUntrackedEdges(tracked_edges, frame_i,frame_pre, starting_frame_no);
+		trackEdgesInFrame(frame_i);
+		removeUntrackedEdges(frame_i,frame_pre);
 	}
 	
 	/**
 	 * Checks the presence of edges in frame_i
 	 * 
-	 * @param tracked_edges presence map
 	 * @param frame_i frame to check
 	 */
-	private static void trackEdgesInFrame(
-			HashMap<Long, boolean[]> tracked_edges,
-			FrameGraph frame_i,
-			int starting_frame_no) {
+	private void trackEdgesInFrame(FrameGraph frame_i) {
 		
 		for(Edge e: frame_i.edgeSet())
 			if(e.canBeTracked(frame_i)){
@@ -146,14 +140,12 @@ public class EdgeTracking {
 	 * (i.e. cells are still there but not neighbors anymore) and
 	 * lost edges because of missing cells (possible segmentation mistake or elimination) 
 	 * 
-	 * @param tracked_edges presence map
 	 * @param frame_i frame to check
+	 * @param frame_pre frame previous to the frame to check
 	 */
-	private static void removeUntrackedEdges(
-			HashMap<Long, boolean[]> tracked_edges, 
+	private void removeUntrackedEdges(
 			FrameGraph frame_i, 
-			FrameGraph frame_pre,
-			int starting_frame_no) {
+			FrameGraph frame_pre) {
 		
 		//introduce the difference between lost edge because of tracking and because of T1
 		ArrayList<Long> to_eliminate = new ArrayList<Long>();
