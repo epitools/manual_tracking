@@ -39,9 +39,10 @@ public class EdgeTracking {
 			SpatioTemporalGraph stGraph) {
 		HashMap<Long, boolean[]> tracked_edges = new HashMap<Long,boolean[]>();
 		
-		initializeTrackedEdges(stGraph, tracked_edges,0);
+		int startingFrameNo = 0;
+		initializeTrackedEdges(stGraph, tracked_edges, startingFrameNo);
 		for(int i=1; i<stGraph.size(); i++)
-			analyzeFrame(stGraph, tracked_edges, i);
+			analyzeFrame(stGraph, tracked_edges, i, startingFrameNo);
 		
 		return tracked_edges;
 	}
