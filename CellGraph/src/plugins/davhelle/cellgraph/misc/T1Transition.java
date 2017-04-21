@@ -201,7 +201,16 @@ public class T1Transition {
 	 * @return true if the transition occurs on the border
 	 */
 	public boolean onBoundary(){
-		FrameGraph previous_frame = stGraph.getFrame(detectionTimePoint - 1);
+		
+		int previous_frame_no = detectionTimePoint - 1;
+		
+		FrameGraph previous_frame = stGraph.getFrame(previous_frame_no);
+		
+		// get the actual tracking code from the array
+		int[] loserNodes = Edge.getCodePair(lostEdgeTrack[previous_frame_no - startingFrame]);
+		
+		assert previous_frame.hasTrackID(loserNodes[0]): "Looser node not found in previous frame";
+		assert previous_frame.hasTrackID(loserNodes[1]): "Looser node not found in previous frame";
 		
 		Node l1 = previous_frame.getNode(loserNodes[0]);
 		Node l2 = previous_frame.getNode(loserNodes[1]);

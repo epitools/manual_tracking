@@ -115,7 +115,7 @@ public class EdgeTracking {
 	 */
 	private void trackEdgesInFrame(FrameGraph frame_i) {
 		
-		for(Edge e: frame_i.edgeSet())
+		for(Edge e: frame_i.edgeSet()){
 			if(e.canBeTracked(frame_i)){
 				long edge_track_code = e.getPairCode(frame_i);
 				
@@ -129,11 +129,48 @@ public class EdgeTracking {
 					else
 						tracked_edges.get(edge_track_code)[correctedFrameNo] = edge_track_code;
 			
+				}else {
+					
+					//did source or target divide? => changing the ids
+					Node target = frame_i.getEdgeTarget(e);
+					Node source = frame_i.getEdgeSource(e);
+					
+					Long old_track_code = null;
+					
+					int source_id = source.getTrackID();
+					int target_id = target.getTrackID();
+					
+					//1. Both cells divide
+					if(target.hasObservedDivision() && source.hasObservedDivision())
+						old_track_code = Edge.computePairCode(
+								target.getDivision().getMother().getTrackID(), 
+								source.getDivision().getMother().getTrackID());
+					else if(target.hasObservedDivision()) {
+						old_track_code = Edge.computePairCode(
+								target.getDivision().getMother().getTrackID(), 
+								source_id);
+					} else if(source.hasObservedDivision()) // only source divides
+						old_track_code = Edge.computePairCode(
+								target_id, 
+								source.getDivision().getMother().getTrackID());
+					
+					if(old_track_code != null){
+						if (tracked_edges.containsKey(old_track_code)){
+							Long[] oldArray = tracked_edges.get(old_track_code);
+							
+							int correctedFrameNo = frame_i.getFrameNo() - starting_frame_no;
+							if(oldArray.length < correctedFrameNo )
+								continue;
+							else
+								tracked_edges.get(old_track_code)[correctedFrameNo] = edge_track_code;
+			
+						}
+					}
 				}
-			} else {
-				//Check for possible divisions
 			}
-	}
+		}
+	}	
+	
 	
 	/**
 	 * Eliminates the edges that are not found because 
@@ -158,12 +195,30 @@ public class EdgeTracking {
 		
 		for(long track_code:tracked_edges.keySet()){
 			
+			int a = Edge.getCodePair(track_code)[0];
+			int b = Edge.getCodePair(track_code)[1];
+			
 			// skip edge arrays that have been resized
 			Long[] oldArray = tracked_edges.get(track_code);
 			if(oldArray.length < i_adjusted )
 				continue;
 			
-			for(int track_id: Edge.getCodePair(track_code)) //Edge tuple (v1,v2)
+			Long edge_code_i = oldArray[i_adjusted];  
+			if(edge_code_i == null){
+				//find the last time frame at which the edge was seen
+				for(int i=1; i <= i_adjusted; i++){
+					edge_code_i = oldArray[i_adjusted - i];
+					if(edge_code_i != null)
+						break;
+				}
+					
+				if(edge_code_i == null){		
+					System.out.printf("Null code for %d [%d,%d] @ %d\n",
+							track_code, a, b, i_adjusted - 1);
+				}
+			}
+			
+			for(int track_id: Edge.getCodePair(edge_code_i)) //Edge tuple (v1,v2)
 				if(!frame_i.hasTrackID(track_id)){ // vertex is missing
 					
 					// check previous frames whether cell is on the boundary
@@ -171,7 +226,17 @@ public class EdgeTracking {
 							"Missing cell %d at frame %d",track_id, preNo_adjusted + starting_frame_no);
 					Node pre = frame_pre.getNode(track_id);
 					
-					if(pre.onBoundary())
+					if(pre == null){
+						//try to rescue
+						FrameGraph frame0 = stGraph.getFrame(starting_frame_no);
+						pre = frame0.getNode(track_id);
+					}
+					
+					if(pre.hasObservedElimination())
+						to_resize.add(track_code);
+					else if(pre.hasObservedDivision())
+						to_resize.add(track_code);
+					else if(pre.onBoundary())
 						to_resize.add(track_code); 
 					else 
 						to_eliminate.add(track_code);
