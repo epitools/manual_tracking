@@ -186,7 +186,7 @@ public class DetectT1Transition {
 						else if(stGraph.getFrame(0).hasTrackID(track_id))
 							if(stGraph.getFrame(0).getNode(track_id).hasObservedDivision()){
 								divisions_with_transitions.add(transition);
-								continue edge_loop;
+								//continue edge_loop;
 							}
 					}
 
@@ -213,6 +213,9 @@ public class DetectT1Transition {
 			}
 			
 		}
+		
+		for(T1Transition t1: divisions_with_transitions)
+			System.out.println("T1wDivision:\n"+t1.toString());
 
 		return stable_transitions;
 	}
