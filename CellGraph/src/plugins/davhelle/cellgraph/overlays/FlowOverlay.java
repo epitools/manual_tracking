@@ -143,9 +143,11 @@ public class FlowOverlay extends StGraphOverlay {
 					g.draw(flow);
 					
 					Coordinate[] track = rawFlow.get(n).getCoordinates();
-					Coordinate c = track[frame_i.getFrameNo()];
-					Ellipse2D.Double shape = new Ellipse2D.Double(c.x - r/2, c.y - r/2, r, r);
-				    g.draw(shape);
+					if(frame_i.getFrameNo() < track.length){
+						Coordinate c = track[frame_i.getFrameNo()];
+						Ellipse2D.Double shape = new Ellipse2D.Double(c.x - r/2, c.y - r/2, r, r);
+					    g.draw(shape);
+					}
 				}
 				break;
 			case 1:
@@ -156,9 +158,11 @@ public class FlowOverlay extends StGraphOverlay {
 					g.draw(flow);
 					
 					Coordinate[] track = smoothFlow.get(n).getCoordinates();
-					Coordinate c = track[frame_i.getFrameNo()];
-					Ellipse2D.Double shape = new Ellipse2D.Double(c.x - r/2, c.y - r/2, r, r);
-				    g.draw(shape);
+					if(frame_i.getFrameNo() < track.length){
+						Coordinate c = track[frame_i.getFrameNo()];
+						Ellipse2D.Double shape = new Ellipse2D.Double(c.x - r/2, c.y - r/2, r, r);
+						g.draw(shape);
+					}
 				}
 				break;
 			case 2:
@@ -171,9 +175,11 @@ public class FlowOverlay extends StGraphOverlay {
 					// simple flow contains less coordinates than the original track so the raw
 					// coordinates are highlighted
 					Coordinate[] track = rawFlow.get(n).getCoordinates();
-					Coordinate c = track[frame_i.getFrameNo()];
-					Ellipse2D.Double shape = new Ellipse2D.Double(c.x - r/2, c.y - r/2, r, r);
-				    g.draw(shape);
+					if(frame_i.getFrameNo() < track.length){
+						Coordinate c = track[frame_i.getFrameNo()];
+						Ellipse2D.Double shape = new Ellipse2D.Double(c.x - r/2, c.y - r/2, r, r);
+						g.draw(shape);
+					}
 				}
 				break;
 			default:
