@@ -71,7 +71,7 @@ public class TransitionOverlay extends StGraphOverlay{
 		//TODO move createPolygonalTiles to PolygonalCellTile class
 		HashMap<Node, PolygonalCellTile> cell_tiles = PolygonalCellTileGenerator.createPolygonalTiles(stGraph,plugin);
 		EdgeTracking edgeTracking = new EdgeTracking(stGraph, plugin.varT1StartingFrame.getValue());
-		HashMap<Long, boolean[]> tracked_edges = edgeTracking.trackEdges(plugin);
+		HashMap<Long, Long[]> tracked_edges = edgeTracking.trackEdges(plugin);
 		
 		plugin.getUI().setProgressBarMessage("Analyzing Transitions..");
 		this.transitions = DetectT1Transition.findTransitions(

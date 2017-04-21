@@ -656,6 +656,12 @@ public abstract class GraphTracking extends TrackingAlgorithm {
 			Node brother2 = bestBrotherCandidate.getNode();
 			Node mother = brother2.getPrevious();
 			
+			if (mother.getFirst().onBoundary() && brother1.onBoundary() && brother2.onBoundary()){
+				System.out.printf("Frame %d: Suppressed division detection on boundary @ [%.0f,%.0f]\n",
+						time_point,untracked.getCentroid().getX(),untracked.getCentroid().getY());
+				continue;
+			}
+			
 			//Geometry acronyms
 			//TODO extend use downwards
 			Geometry b1 = brother1.getGeometry();

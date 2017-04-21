@@ -6,6 +6,7 @@ import java.util.HashMap;
 
 import plugins.davhelle.cellgraph.graphs.FrameGraph;
 import plugins.davhelle.cellgraph.graphs.SpatioTemporalGraph;
+import plugins.davhelle.cellgraph.nodes.Edge;
 import plugins.davhelle.cellgraph.nodes.Node;
 
 import com.vividsolutions.jts.geom.Geometry;
@@ -33,7 +34,7 @@ public class T1Transition {
 	 * presence or absence of the old
 	 * edge
 	 */
-	boolean[] lostEdgeTrack;
+	Long[] lostEdgeTrack;
 	
 	/**
 	 * Store when the first stable transition
@@ -65,7 +66,7 @@ public class T1Transition {
 	 * @param pair track ids of parent nodes
 	 * @param edge_track presence array for each time point in the stGraph
 	 */
-	public T1Transition(SpatioTemporalGraph stGraph, int[] pair, boolean[] edge_track, int starting_frame) {
+	public T1Transition(SpatioTemporalGraph stGraph, int[] pair, Long[] edge_track, int starting_frame) {
 		
 		this.stGraph = stGraph;
 		this.lostEdgeTrack = edge_track;
@@ -91,7 +92,7 @@ public class T1Transition {
 	private int findFirstMissingFrameNo(){
 		
 		for(int i=0; i<lostEdgeTrack.length; i++)
-			if(!lostEdgeTrack[i])
+			if(lostEdgeTrack[i] == null)
 				return i + startingFrame;
 		
 		return -1;
@@ -107,7 +108,7 @@ public class T1Transition {
 		//compute the transition vector, i.e. length of every transition
 		int[] transition_vector = new int[lostEdgeTrack.length];
 		for(int i=detectionTimePoint - startingFrame; i<lostEdgeTrack.length; i++)
-			if(!lostEdgeTrack[i]){
+			if(lostEdgeTrack[i] == null){
 				transition_vector[i] = transition_vector[i-1] + 1;
 				transition_vector[i-1] = 0;
 			}
@@ -200,7 +201,16 @@ public class T1Transition {
 	 * @return true if the transition occurs on the border
 	 */
 	public boolean onBoundary(){
-		FrameGraph previous_frame = stGraph.getFrame(detectionTimePoint - 1);
+		
+		int previous_frame_no = detectionTimePoint - 1;
+		
+		FrameGraph previous_frame = stGraph.getFrame(previous_frame_no);
+		
+		// get the actual tracking code from the array
+		int[] loserNodes = Edge.getCodePair(lostEdgeTrack[previous_frame_no - startingFrame]);
+		
+		assert previous_frame.hasTrackID(loserNodes[0]): "Looser node not found in previous frame";
+		assert previous_frame.hasTrackID(loserNodes[1]): "Looser node not found in previous frame";
 		
 		Node l1 = previous_frame.getNode(loserNodes[0]);
 		Node l2 = previous_frame.getNode(loserNodes[1]);
@@ -218,7 +228,11 @@ public class T1Transition {
 	 */
 	public void findSideGain(HashMap<Node, PolygonalCellTile> cell_tiles) {
 		
-		FrameGraph previous_frame = stGraph.getFrame(detectionTimePoint - 1);
+		int previous_frame_no = detectionTimePoint - 1;
+		FrameGraph previous_frame = stGraph.getFrame(previous_frame_no);
+		
+		// get the actual tracking code from the array
+		int[] loserNodes = Edge.getCodePair(lostEdgeTrack[previous_frame_no - startingFrame]);
 		
 		assert previous_frame.hasTrackID(loserNodes[0]): "Looser node not found in previous frame";
 		assert previous_frame.hasTrackID(loserNodes[1]): "Looser node not found in previous frame";
