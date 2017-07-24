@@ -62,6 +62,7 @@ public class BigXlsExporter {
 			"<li>Centroid position x" +
 			"<li>Centroid position y" +
 			"<li>Cell apical area" +
+			"<li>Cell apical perimeter" +
 			"<li>Polygon/Neighbor number" +
 			"<li>Voronoi cell area" +
 			"<li>Best fit ellipse major axis length" +
@@ -152,6 +153,7 @@ public class BigXlsExporter {
 		XLSUtil.setCellString(sheet, col_no++, row_no, "y");
 		XLSUtil.setCellString(sheet, col_no++, row_no, "polygonNo");
 		XLSUtil.setCellString(sheet, col_no++, row_no, "area");
+		XLSUtil.setCellString(sheet, col_no++, row_no, "perimeter");
 		XLSUtil.setCellString(sheet, col_no++, row_no, "voronoiArea");
 		XLSUtil.setCellString(sheet, col_no++, row_no, "ellipseMajorAxisLength");
 		XLSUtil.setCellString(sheet, col_no++, row_no, "ellipseMinorAxisLength");
@@ -187,6 +189,7 @@ public class BigXlsExporter {
 			
 			//area
 			XLSUtil.setCellNumber(sheet, col_no++, row_no, node.getGeometry().getArea());
+			XLSUtil.setCellNumber(sheet, col_no++, row_no, node.getGeometry().getLength());
 			double voronoiArea = voronoiTesselation.get(node).getArea();
 			if(node.onBoundary())
 				voronoiArea = -1;
