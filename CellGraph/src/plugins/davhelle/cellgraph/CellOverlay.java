@@ -74,6 +74,9 @@ public class CellOverlay extends EzPlug implements EzVarListener<OverlayEnum>{
 	EzVarBoolean				varBooleanPolygon;
 	EzVarBoolean				varBooleanCCenter;
 	EzVarEnum<CellColor> 		varPolygonColor;
+	
+	//Border
+	EzVarBoolean				varBorderDisplacement;
 
 	//Voronoi
 	EzVarBoolean				varBooleanAreaDifference;
@@ -207,6 +210,11 @@ public class CellOverlay extends EzPlug implements EzVarListener<OverlayEnum>{
 				varBooleanPolygon,
 				varPolygonColor,
 				varBooleanCCenter);
+		
+		//Border Overlay
+		varBorderDisplacement = new EzVarBoolean("Displacement arrows", false);
+		EzGroup groupSegmentationBorder = new EzGroup("Overlay elements",
+				varBorderDisplacement);
 		
 		//Voronoi Overlay
 		varBooleanVoronoiDiagram = new EzVarBoolean("Voronoi Diagram", true);
@@ -353,6 +361,7 @@ public class CellOverlay extends EzPlug implements EzVarListener<OverlayEnum>{
 		
 		//Describe the visibility of each overlay parameters
 		varPlotting.addVisibilityTriggerTo(groupCellMap, OverlayEnum.CELL_OUTLINE);
+		varPlotting.addVisibilityTriggerTo(groupSegmentationBorder, OverlayEnum.CELL_SEGMENTATION_BORDER);
 		varPlotting.addVisibilityTriggerTo(groupPolygonClass, OverlayEnum.CELL_POLYGON_CLASS);
 		varPlotting.addVisibilityTriggerTo(groupVoronoiMap, OverlayEnum.CELL_VORONOI_DIAGRAM);
 		varPlotting.addVisibilityTriggerTo(groupTracking, OverlayEnum.TRACKING_REVIEW);
@@ -372,6 +381,7 @@ public class CellOverlay extends EzPlug implements EzVarListener<OverlayEnum>{
 		return new EzGroup("1. SELECT OVERLAY TO ADD",
 				varPlotting,
 				groupCellMap,
+				groupSegmentationBorder,
 				groupPolygonClass,
 				groupVoronoiMap,
 				groupDivisions,
@@ -491,7 +501,7 @@ public class CellOverlay extends EzPlug implements EzVarListener<OverlayEnum>{
 			break;
 		case CELL_SEGMENTATION_BORDER: 
 			sequence.addOverlay(
-					new BorderOverlay(stGraph));
+					new BorderOverlay(stGraph,varBorderDisplacement));
 			break;
 
 		case CELL_OUTLINE: 
