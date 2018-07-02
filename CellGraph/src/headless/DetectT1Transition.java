@@ -152,11 +152,11 @@ public class DetectT1Transition {
 				
 				boolean has_minimal_durationNew = transition.length() >= minimalTransitionLength;
 				boolean has_minimal_durationOld = transition.getOldEdgeSurvivalLength() >= minimalOldEdgeSurvivalLength;
-				boolean is_not_onBoundary = !transition.onBoundary();
+				//boolean is_not_onBoundary = !transition.onBoundary();
 				if(
 						has_minimal_durationOld && 	//old edge visible for at least X frames
-						has_minimal_durationNew && 	//new edge visible for at least X frames consecutively
-						is_not_onBoundary 			//transition should not occur on boundary
+						has_minimal_durationNew //&& 	//new edge visible for at least X frames consecutively
+						//is_not_onBoundary 			//transition should not occur on boundary
 						){
 					
 
@@ -169,7 +169,12 @@ public class DetectT1Transition {
 					//check if they are connected in LOST frame 
 					//and if they are unconnected in previous frame
 					//transition.checkConnectivityAssumption();
-					transition.findSideGain(cell_tiles);
+					try {
+						transition.findSideGain(cell_tiles);
+					} catch (Exception e) {
+						System.out.printf("\n\tREJECTED! BOUNDARY ISSUES\n");
+						continue;
+					}
 					
 					System.out.printf("\tProposed Side Gain: %s\n",
 							Arrays.toString(transition.getWinnerNodes()));
