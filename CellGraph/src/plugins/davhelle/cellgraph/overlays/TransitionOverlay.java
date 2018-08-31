@@ -53,6 +53,8 @@ public class TransitionOverlay extends StGraphOverlay{
 	final Color winner_color = Color.magenta;
 	private EzVarBoolean paint_legacy;
 	
+	private int varT1StartingFrame;
+	
 	/**
 	 * Initialize Transition overlay
 	 * 
@@ -73,6 +75,8 @@ public class TransitionOverlay extends StGraphOverlay{
 		EdgeTracking edgeTracking = new EdgeTracking(stGraph, plugin.varT1StartingFrame.getValue());
 		HashMap<Long, Long[]> tracked_edges = edgeTracking.trackEdges(plugin);
 		
+		varT1StartingFrame = plugin.varT1StartingFrame.getValue();
+		
 		plugin.getUI().setProgressBarMessage("Analyzing Transitions..");
 		this.transitions = DetectT1Transition.findTransitions(
 				stGraph,
@@ -80,7 +84,7 @@ public class TransitionOverlay extends StGraphOverlay{
 				tracked_edges,
 				plugin.varMinimalTransitionLength.getValue(),
 				plugin.varMinimalOldSurvival.getValue(),
-				plugin.varT1StartingFrame.getValue());
+				varT1StartingFrame);
 		
 		System.out.println("Transitions found: "+transitions.size());
 	
@@ -114,12 +118,17 @@ public class TransitionOverlay extends StGraphOverlay{
 		StringBuilder builder_main = new StringBuilder();
 		StringBuilder builder_loser = new StringBuilder();
 		StringBuilder builder_winner = new StringBuilder();
+		StringBuilder builder_stats = new StringBuilder();
 		
+		int[] t1_no = new int[stGraph.size()];
 		for(T1Transition t1: transitions){
 			if(!t1.hasWinners())
 				continue;
 			
-			builder_main.append(t1.getDetectionTime());
+			int detectionTime = t1.getDetectionTime();
+			t1_no[detectionTime]++;
+			
+			builder_main.append(detectionTime);
 			builder_main.append(',');
 			builder_main.append(t1.length());
 			builder_main.append(',');
@@ -152,6 +161,15 @@ public class TransitionOverlay extends StGraphOverlay{
 			builder_winner.append('\n');
 		}
 		
+		builder_stats.append("FrameNo,EdgeNo,TransitionNo\n");
+		for(int i=varT1StartingFrame; i<stGraph.size(); i++) {
+			FrameGraph frame = stGraph.getFrame(i);
+			builder_stats.append(String.format("%d,%d,%d\n",
+					i,
+					frame.edgeSet().size(),
+					t1_no[i]));
+		}
+		
 		File main_output_file = new File(file_name+"_main.csv");
 		CsvWriter.writeOutBuilder(builder_main, main_output_file);
 		
@@ -160,11 +178,15 @@ public class TransitionOverlay extends StGraphOverlay{
 		
 		File winner_output_file = new File(file_name+"_winner.csv");
 		CsvWriter.writeOutBuilder(builder_winner, winner_output_file);
+
+		File stats_output_file = new File(file_name+"_stats.csv");
+		CsvWriter.writeOutBuilder(builder_stats, stats_output_file);
 		
-		System.out.printf("Successfully wrote to:\n\t%s\n\t%s\n\t%s\n",
+		System.out.printf("Successfully wrote to:\n\t%s\n\t%s\n\t%s\n\t%s\n",
 				main_output_file.getName(),
 				loser_output_file.getName(),
-				winner_output_file.getName());
+				winner_output_file.getName(),
+				stats_output_file.getName());
 		
 	}
 
