@@ -11,6 +11,8 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import com.vividsolutions.jts.geom.Point;
+
 import jxl.write.WritableSheet;
 import plugins.adufour.ezplug.EzVarBoolean;
 import plugins.davhelle.cellgraph.CellOverlay;
@@ -54,6 +56,7 @@ public class TransitionOverlay extends StGraphOverlay{
 	private EzVarBoolean paint_legacy;
 	
 	private int varT1StartingFrame;
+	private HashMap<Long, Long[]> tracked_edges;
 	
 	/**
 	 * Initialize Transition overlay
@@ -73,7 +76,7 @@ public class TransitionOverlay extends StGraphOverlay{
 		//TODO move createPolygonalTiles to PolygonalCellTile class
 		HashMap<Node, PolygonalCellTile> cell_tiles = PolygonalCellTileGenerator.createPolygonalTiles(stGraph,plugin);
 		EdgeTracking edgeTracking = new EdgeTracking(stGraph, plugin.varT1StartingFrame.getValue());
-		HashMap<Long, Long[]> tracked_edges = edgeTracking.trackEdges(plugin);
+		tracked_edges = edgeTracking.trackEdges(plugin);
 		
 		varT1StartingFrame = plugin.varT1StartingFrame.getValue();
 		
@@ -102,6 +105,7 @@ public class TransitionOverlay extends StGraphOverlay{
 	 * - [base_path]_main.csv contains the main statistics for each transition <br>
 	 * - [base_path]_loser.csv contains the sequential length of each loser edge (i.e. eliminated)<br>
 	 * - [base_path]_winner.csv contains the sequential length of each winner edge (i.e. newly established)<br>
+	 * - [base_path]_stats.csv contains the global statistics for each frame (e.g. number of transitions, no. of edges ..)
 	 * <br>
 	 * Loser and winner edge presence is mutually exclusive
 	 * 
@@ -161,12 +165,23 @@ public class TransitionOverlay extends StGraphOverlay{
 			builder_winner.append('\n');
 		}
 		
-		builder_stats.append("FrameNo,EdgeNo,TransitionNo\n");
+		builder_stats.append("FrameNo,EdgeNo,TrackedEdgeNo,DivisionNo,EliminationNo,TransitionNo\n");
 		for(int i=varT1StartingFrame; i<stGraph.size(); i++) {
 			FrameGraph frame = stGraph.getFrame(i);
-			builder_stats.append(String.format("%d,%d,%d\n",
+			int tracked_edge_no = 0;
+			for(Edge e: frame.edgeSet()) {
+				if(e.canBeTracked(frame)) {
+					long e_id = e.getTrackId();
+					assert tracked_edges.containsKey(e_id);
+					tracked_edge_no += 1;
+				}
+			}
+			builder_stats.append(String.format("%d,%d,%d,%d,%d,%d\n",
 					i,
 					frame.edgeSet().size(),
+					tracked_edge_no,
+					frame.getDivisionNo(),
+					frame.getEliminationNo(),
 					t1_no[i]));
 		}
 		
@@ -279,6 +294,26 @@ public class TransitionOverlay extends StGraphOverlay{
 				int[] winner_ids = t1.getWinnerNodes();
 				draw_line(g, frame_i, winner_ids, winner_color);
 			}
+		}
+		
+//		for(Edge e: frame_i.edgeSet())
+//			if(e.canBeTracked(frame_i)) {
+//				long trackId = e.getTrackId();
+//				if(tracked_edges.containsKey(trackId)) {
+//					g.setColor(Color.orange);
+//				} else {
+//					g.setColor(Color.green);
+//				}
+		for(Edge e: frame_i.edgeSet()) {
+			if(e.canBeTracked(frame_i)) {
+				long e_id = e.getTrackId();
+				assert tracked_edges.containsKey(e_id);
+				g.setColor(Color.green);
+			} else {
+				g.setColor(Color.orange);
+			}
+			Point geo = e.getGeometry().getCentroid();
+			g.fillOval((int)geo.getX(),(int)geo.getY(), 2, 2);
 		}
 
 	}
