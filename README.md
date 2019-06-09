@@ -24,7 +24,7 @@ Once the customized version of the plugins is installed, open icy and:
 3. Select and run the TEST overlay from the CellOverlay plugin (just scroll up in the list)
 4. Upon clicking start a location has to be selected where the tracking information is saved
 4. The viewer should now highlight a legend that says "Click on a cell to start tracking it"
-5. Upon clicking a cell, the previous frame will be displayed:
+5. Upon clicking a cell, the next frame will be displayed with the previous frame visualized on top of it, to aid the matching process:
 
 ![image](Figure_ManualTracking.png)
 
